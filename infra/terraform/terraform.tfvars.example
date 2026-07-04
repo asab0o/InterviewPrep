@@ -1,0 +1,18 @@
+# このファイルをコピーして terraform.tfvars を作成し、実際の値を入れて使う。
+# terraform.tfvars 自体はコミットしないこと（.gitignore で除外済み）。
+#
+#   cp terraform.tfvars.example terraform.tfvars
+
+aws_region             = "ap-northeast-1"
+project_name           = "interview-prep"
+lightsail_bundle_id    = "micro_2_0"
+lightsail_blueprint_id = "ubuntu_22_04"
+
+# 事前に `ssh-keygen -t ed25519 -f ~/.ssh/lightsail_interview_prep -C "interview-prep-lightsail"` で作成
+ssh_public_key_path = "~/.ssh/lightsail_interview_prep.pub"
+
+# 自分のグローバルIPアドレス/32 に変更すること（確認方法: curl https://checkip.amazonaws.com）
+allowed_ssh_cidr = "203.0.113.10/32"
+
+budget_limit_usd          = 15
+budget_notification_email = "asa.pf1205@gmail.com"

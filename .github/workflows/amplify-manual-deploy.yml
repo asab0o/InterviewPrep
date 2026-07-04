@@ -1,0 +1,40 @@
+name: Amplify Manual Redeploy
+
+on:
+  workflow_dispatch:
+    inputs:
+      branch:
+        description: "Amplifyでビルドをトリガーするブランチ名"
+        required: true
+        default: "main"
+
+# --------------------------------------------------------------------------
+# コード変更を伴わずにAmplifyの再ビルド・再デプロイを行いたい場合に使う手動トリガー。
+# （例：Amplifyコンソール側の環境変数を変更した後、新しいコミットなしで反映させたいとき）
+#
+# 前提となるGitHub Secrets:
+#   AWS_ACCESS_KEY_ID / AWS_SECRET_ACCESS_KEY
+#     amplify:StartJob のみを許可する最小権限IAMユーザーの認証情報。
+#     可能であればOIDCによる一時的なロール引き受け方式への切り替えを推奨
+#     （長期アクセスキーを持たずに済むため。要検討・docs/deployment-cicd.md参照）。
+#   AMPLIFY_APP_ID
+#     AWS Amplify HostingアプリのID（コンソールの General settings > App ARN 末尾から確認可能）
+# --------------------------------------------------------------------------
+
+jobs:
+  trigger-build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ap-northeast-1
+
+      - name: Start Amplify build job
+        run: |
+          aws amplify start-job \
+            --app-id "${{ secrets.AMPLIFY_APP_ID }}" \
+            --branch-name "${{ inputs.branch }}" \
+            --job-type RELEASE
