@@ -1,0 +1,27 @@
+# 環境変数（秘密情報を含むため絶対にコミットしない）
+.env
+.env.*
+!.env.example
+
+# Node.js
+node_modules/
+dist/
+build/
+*.log
+npm-debug.log*
+pnpm-debug.log*
+
+# SQLite（ローカル開発用のDBファイル。誤ってコミットしないため）
+*.sqlite
+*.sqlite3
+*.db
+
+# OS
+.DS_Store
+
+# Terraform（詳細は infra/terraform/.gitignore にも重複定義）
+infra/terraform/.terraform/
+infra/terraform/*.tfstate
+infra/terraform/*.tfstate.*
+infra/terraform/*.tfvars
+!infra/terraform/terraform.tfvars.example
