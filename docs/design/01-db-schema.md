@@ -90,6 +90,8 @@ export const attempts = sqliteTable('attempts', {
 
   videoUrl: text('video_url'),                        // YouTube URL（任意。後から編集で貼付 = 5.8）
   transcript: text('transcript'),                     // 文字起こし全文（任意 = 5.3）
+  // できなかったこと・つまずいた点の自由記述。旧UMPIREのU/M/P記述欄の簡略版（任意 = 5.3、push本文フォーマット = 5.4 Q16）
+  retrospective: text('retrospective'),
 
   githubPushed: integer('github_pushed', { mode: 'boolean' }).notNull().default(false),
   // 実際にpushしたリポジトリ内パス。上書き防止チェック・再push時の同一パス判定に使用
@@ -185,3 +187,4 @@ export default defineConfig({
 3. `attempts.githubPath`：5.4の上書き防止チェックを確実にするため、pushしたパスを記録する列を追加。→ 要確認 Q5。
 4. `attempts.date` を TEXT('YYYY-MM-DD') で保持：日付のみの記録項目でありタイムゾーン起因のズレを避けるため。
 5. `phrases` は `onDelete: 'cascade'`：Attempt削除時に紐づくフレーズも削除（フラッシュカードに孤児フレーズが残らない）。→ 要確認 Q6（削除機能の有無自体が未定義）。
+6. `attempts.retrospective`：7章にない列を追加。旧Obsidianテンプレートの UMPIRE U/M/P（Summary/Pattern/Approach）記述欄が実際にはほとんど使われていなかったことを踏まえ、GitHub push本文（5.4）で同じ役割を「できなかったこと」の一言記述に簡略化するための列（Q16解決済み・`docs/design/05-open-questions.md`参照）。

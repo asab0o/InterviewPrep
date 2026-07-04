@@ -137,6 +137,7 @@ type CreateAttemptRequest = {
   problemStatement?: string | null;
   videoUrl?: string | null;
   transcript?: string | null;
+  retrospective?: string | null;      // できなかったこと・つまずいた点（任意。push本文のCould Not Doに使用 = Q16）
   umpireExplanation?: string | null;  // マスタ外問題の解説（プレビュー生成結果を保存）
   phrases: PhraseInput[];
 };
@@ -162,6 +163,7 @@ type AttemptDetail = {
   umpireExplanation: string | null;   // マスタ問題はProblem由来、マスタ外はAttempt由来を解決して返す
   videoUrl: string | null;
   transcript: string | null;
+  retrospective: string | null;
   githubPushed: boolean; githubPath: string | null;
   phrases: { id: number; englishText: string; japaneseText: string }[];
   createdAt: string; updatedAt: string;
@@ -253,6 +255,27 @@ type GithubPushResponse = { path: string; commitUrl: string; sha: string };
 3. 存在し、かつ `force !== true` → **409 Conflict**（`{ error.code: 'FILE_EXISTS' }`）を返しフロントで警告表示。ユーザーが続行を選ぶと `force: true` で再送。
 4. **競合回避ルール**：`createdByApp === false`（既存Obsidianファイル）へのpushは `force` でも拒否する方針とするか要確認 Q7。既定は「アプリ生成パス以外は触らない」。
 5. 成功時 `attempts.githubPushed = true`、`attempts.githubPath = path` を保存。
+
+**Markdown本文組み立て（`content` 省略時。5.4・Q16解決済み）**：フロントマターなし。以下の固定テンプレートで組み立てる。
+
+```markdown
+# {number}. {title} (Attempt {attemptNumber}) — {date}
+
+## Code
+
+```{language 未指定なら省略可}
+{code}
+```
+
+## English
+- {phrase.englishText} → {phrase.japaneseText}
+（phrases が空配列なら見出しごと省略）
+
+## Could Not Do
+{retrospective}
+（retrospective が null/空文字なら見出しごと省略）
+```
+`umpireExplanation` は本文に含めない（Problemマスタ側で1問1件管理・アプリ内参照が主目的のため）。フロントは push 前に組み立て結果をプレビュー表示し、必要なら `content` を上書きして自由編集した内容をそのままpushできる。
 
 対象リポジトリは環境変数 `GITHUB_REPO_OWNER` / `GITHUB_REPO_NAME`（12章）。
 **push権限のトークン（Q8で解決済み）**：ログイン用のGitHub OAuthとは別に、`leetcode-interview-prep`

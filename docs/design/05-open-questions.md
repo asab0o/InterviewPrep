@@ -19,10 +19,10 @@
 | Q13 | リポジトリ配置（front/back同居 or 分割） | 8章はフロント=Amplify・バックエンド=Lightsailと別ホスティング。単一リポジトリのmonorepoか別リポジトリか未定 | monorepo（`frontend/` `backend/`）。Amplifyはサブディレクトリビルド指定。両ディレクトリはそれぞれ独立したpnpmプロジェクト（各自`pnpm-lock.yaml`を持つ）とし、pnpm workspace機能は現時点では使わない（Q12参照） |
 | Q14 | フラッシュカードの英語音声読み上げ | 5.6は日→英の裏返し表示のみ。発音確認のためのTTS要否は未言及（スピーキング準備アプリの文脈） | MVPではスコープ外（フェーズ2候補） |
 | Q15 | 記録フォームでの問題文タイトル自動反映の保存 | 5.5でproblem_titleを問題文欄1行目へ自動挿入。この合成後テキストをそのまま `problem_statement` に保存するか、タイトル行を除去して保存するか | 合成後テキストをそのまま `problem_statement` に保存（UMPIRE入力の再現性重視） |
-| Q16 | GitHubへpushするMarkdownの本文フォーマット | 5.4はファイル名規則は確定だが、ファイル**中身**の構成（コード/フレーズ/UMPIREをどう並べるか）が未定義 | code＋UMPIRE＋フレーズを見出し付きで結合するテンプレートを別途定義予定。要フォーマット確定 |
+| ~~Q16~~ | ~~GitHubへpushするMarkdownの本文フォーマット~~ | **解決済み（2026-07-04決定）**：既存Obsidianファイル（`problems/linked-list/21. Merge Two Sorted Lists.md`）を参照しつつ、旧テンプレートのU/M/P（Summary/Pattern/Approach）およびフロントマターの`pattern`/`difficulty`/`mastery`は、実際にはほとんど記入されておらず、かつ現行DBスキーマにも存在しないフィールドだったため廃止。フロントマター自体も「GitHub側だけのメタデータ」を持つと将来のスキーマ変更に追従させる二重管理コストが発生するため廃止し、日付・挑戦回数は見出し行にプレーンテキストで含める方式に統一。UMPIRE解説（`umpire_explanation`）はProblemマスタ側で1問1件管理・アプリ内参照が主目的のためpush本文には含めない。代わりに、旧「Could Not Say」チェックリストの役割を果たす自由記述欄として`attempts.retrospective`（できなかったこと／つまずいた点）を新設。最終テンプレートは`docs/requirements.md` 5.4参照 | （解決済みのため暫定案なし） |
 
 ## 特に早期確定が望ましいもの
 - ~~Q1（CORS/クッキー/ドメイン）：解決済み（プロキシ方式採用、上表参照）~~
 - **Q3（モデルID）**：5.3/5.5の中核。コスト試算にも影響。
 - ~~Q8（pushトークン）：解決済み（Fine-grained PAT採用、上表参照）~~
-- **Q16（Markdown本文フォーマット）**：5.4 push の成果物品質に直結。
+- ~~Q16（Markdown本文フォーマット）：解決済み（フロントマター廃止＋retrospective新設、上表参照）~~
