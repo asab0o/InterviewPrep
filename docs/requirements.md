@@ -196,6 +196,7 @@ MVP（フェーズ1）で実装する機能と、フェーズ2以降に回す機
 **実装注記**：`QuizLog.phrase_ids`のような配列項目は、SQLiteに配列型が存在しないため**JSON文字列としてTEXTカラムに保存**する（SQLiteのJSON1拡張でクエリも可能）。他の将来的なリスト項目も同様の方針とする。
 
 ## 8. 技術スタック
+- パッケージマネージャ：**pnpm**（npm/yarnは使わない。2026-07-04決定。詳細は`CLAUDE.md`参照）
 - フロントエンド：React（Vite）+ TypeScript + Tailwind
 - バックエンド：Node.js（Express）+ TypeScript
 - ホスティング：
@@ -213,14 +214,18 @@ MVP（フェーズ1）で実装する機能と、フェーズ2以降に回す機
 - 文字起こし：生成自体は`leetcode-interview-prep`側のmacOS専用スクリプト（Swift/SpeechAnalyzer）でローカル実行し、アプリはブラウザのFile API経由で`.txt`を読み込んで保存・表示するだけ（バックエンドのホスティング先に依存しない設計）
 - GitHub連携：既存リポジトリ`problems/`配下、カテゴリ別フォルダ（kebab-case）、新規ファイルは`{番号}-{slug}.md`形式、再挑戦は自動採番で`-2`連番。既存ファイルは触らない。push前に上書き警告チェックあり
 - フェーズ2：英語メモの一覧・検索ビュー／優先出題ロジック／YouTube自動アップロード
-- 技術スタック：React(Vite)+TS / Node.js(Express)+TS / Amplify Hosting + Lightsail(SQLite) / GitHub OAuth
+- 技術スタック：pnpm / React(Vite)+TS / Node.js(Express)+TS / Amplify Hosting + Lightsail(SQLite) / GitHub OAuth
 - AIモデル使い分け：UMPIRE生成=Sonnet系、翻訳サジェスト=Haiku系。APIキーはすべてバックエンド側で管理
 
 ## 10. 残る論点（すべて解決済み ✅）
 - ✅ 認証：GitHub OAuth
 - ✅ レスポンシブ：必須（閲覧はスマホ、編集は主にPC）
 - ✅ ホスティング：AWS（Amplify Hosting + Lightsail/SQLite の軽量構成）
+- ✅ フロント⇔バックエンドの接続方式：**カスタムドメインは購入しない**。Amplify Hostingの
+  リライト機能で`/api/<*>``/auth/<*>`をLightsailへプロキシする方式を採用（2026-07-04決定）。
+  ブラウザは常に同一オリジン扱いになるためCORS設定・証明書運用が不要（`docs/infra-setup.md`参照）
 - ✅ GitHubリポジトリ構成：既存リポジトリ`problems/`配下・kebab-case命名で確定
+- ✅ GitHub pushトークン：Fine-grained PAT（対象リポジトリ1つ・Contents読み書きのみ）を`GITHUB_PUSH_TOKEN`として保持。ログイン用OAuthとは分離（2026-07-04決定）
 - ✅ 網羅率の精度：NeetCode 150問題マスタ＋オートコンプリートで表記ゆれを防止
 - ✅ 過去データ：開発時にインポートスクリプトで一括投入
 
@@ -240,11 +245,15 @@ MVP（フェーズ1）で実装する機能と、フェーズ2以降に回す機
 ## 12. 事前準備リスト（人間側の作業・Claude Codeでは代行不可）
 - AWSアカウント作成、Lightsail小型インスタンスの起動
 - GitHub OAuth Appの登録（Settings > Developer settings > OAuth Apps）し、Client ID / Client Secretを発行
+- GitHub Fine-grained PATの発行（Settings > Developer settings > Personal access tokens > Fine-grained tokens）。
+  対象リポジトリを`leetcode-interview-prep`のみに限定し、Permissionsは`Contents: Read and write`のみ付与する
+  （push用。ログイン用OAuthとは別トークン。詳細は`docs/design/05-open-questions.md` Q8参照）
 - Anthropic APIキーの発行（console.anthropic.com）
 - 上記のシークレット類を`.env`にまとめる（下記想定変数名）：
   - `ANTHROPIC_API_KEY`
   - `GITHUB_CLIENT_ID` / `GITHUB_CLIENT_SECRET`
   - `GITHUB_ALLOWED_USERNAME`（単一ユーザー制限用。このGitHubユーザー名以外はログイン不可にする）
+  - `GITHUB_PUSH_TOKEN`（Fine-grained PAT。push専用。ログイン用OAuthとは別）
   - `SESSION_SECRET`
   - `DB_PATH`（SQLiteファイルの保存先パス）
   - `GITHUB_REPO_OWNER` / `GITHUB_REPO_NAME`（`asab0o` / `leetcode-interview-prep`）
