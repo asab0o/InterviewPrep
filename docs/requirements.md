@@ -64,6 +64,7 @@ MVP（フェーズ1）で実装する機能と、フェーズ2以降に回す機
   2. **手動貼り付け**：テキストエリアに直接ペースト
   - **文字起こしの生成自体はこのアプリでは行わない**（後述の実装注記参照）。あくまで、すでに`leetcode-interview-prep`側のワークフロー（`/practice-wrapup`または`transcribe.sh`単体）で生成済みのテキストを取り込んで保存・閲覧できるようにするだけ
   - オンデバイス音声認識（macOS 26 SpeechAnalyzer）の特性上、フィラー（uh, um）や言い淀みがそのまま文字起こしに残ることがあるが、これは「詰まった箇所」のシグナルとして意図的にそのまま保持する（加工・整形はしない）
+- 振り返り（retrospective）：任意項目。「できなかったこと／つまずいた点」を自由記述するプレーンテキストエリア（例：エッジケースを見落とした、ポインタの更新を忘れた等）。旧Obsidianテンプレートの UMPIRE の U/M/P（Summary/Pattern/Approach）に相当する記述欄だったが、実際にはほとんど書かれていなかったため、この1項目に簡略化した（5.4のpush本文フォーマット、Q16参照）
 
 **実装注記（重要な制約）**：文字起こしスクリプト（`leetcode-interview-prep/scripts/transcribe.sh`）はmacOS 26のSpeechAnalyzer（Swift）を使ったオンデバイス処理であり、**macOS専用**。本アプリのバックエンド（Express）は将来AWS Lightsail（Linux）にデプロイする計画があるため、バックエンド側でこのスクリプトを直接実行する設計にはしない。文字起こしの実行は常にユーザー自身のMac上でローカルに行い、生成された`.txt`をアプリ側（ブラウザのFile API経由）で読み込んで保存するだけ、という役割分担を徹底する。これによりバックエンドがlocalhostで動いていてもAWS Lightsailに載っていても、この機能の動作は変わらない。
 
@@ -89,6 +90,25 @@ MVP（フェーズ1）で実装する機能と、フェーズ2以降に回す機
   - 既存ファイル（`125. Valid Palindrome.md`等スペース入り）はリネームせずそのまま残す
 - **競合回避ルール**：アプリが作成したファイルはアプリからのみ更新する。既存ファイル（Obsidian時代のもの）はアプリから触らない。ローカルからのpushとアプリからのpushが同一ファイルに重ならないようにする
 - **上書き防止チェック**：push前に同一パスのファイルが既に存在するか確認し、意図しない上書き（番号の偶然の重複等）であればユーザーに警告を表示してから続行する
+- **Markdown本文フォーマット（確定・Q16解決）**：フロントマターは持たない（旧Obsidianテンプレートの`pattern`/`difficulty`/`mastery`はDBに実体がなく、GitHub側だけの二重管理になるため廃止）。日付・問題名・挑戦回数は見出し行にプレーンテキストで含める。構成は以下の固定テンプレート：
+  ```markdown
+  # {number}. {title} (Attempt {attempt_number}) — {date}
+
+  ## Code
+
+  ```{language}
+  {code}
+  ```
+
+  ## English
+  - {english_text} → {japanese_text}
+  （Phraseの英日ペアを箇条書きで列挙。0件なら見出しごと省略）
+
+  ## Could Not Do
+  {retrospective}
+  （空なら見出しごと省略）
+  ```
+  UMPIRE解説（`umpire_explanation`）は本文には含めない（Problemマスタ側で1問1件管理・アプリ内で参照する情報のため。GitHub側は「コード＋英語学習記録＋振り返り」の個人ログに徹する）
 
 #### 5.5 UMPIRE解説生成【MVP】
 - 記録フォーム内に問題文を貼り付ける欄を用意し、Anthropic API（Claude）経由で既存のUMPIREプロンプトを実行
@@ -120,7 +140,7 @@ MVP（フェーズ1）で実装する機能と、フェーズ2以降に回す機
 #### 5.8 記録の閲覧【MVP】
 - **記録一覧**：過去のAttemptを日付順に一覧表示。カテゴリー・問題名での絞り込みが可能
 - **記録詳細**：一覧から選択すると、その記録の全内容を閲覧できる
-  - 日付・カテゴリー・問題名・コード・登録フレーズ（英日ペア）・UMPIRE解説・文字起こし
+  - 日付・カテゴリー・問題名・コード・登録フレーズ（英日ペア）・UMPIRE解説・文字起こし・振り返り（retrospective）
   - **YouTube動画の埋め込み再生**：AttemptにYouTube URLが登録されていれば、詳細画面内にiframe埋め込みプレイヤーを表示してその場で再生できる
   - Video URL欄は記録フォーム（5.3）に最初から用意されており、記録時点では空欄で保存し、YouTubeアップロード後に同じ記録を編集してURLを貼る運用（フェーズ2の自動アップロード実装後は自動で紐付く）
   - 注意：埋め込み再生には動画の公開設定が「公開」または「限定公開（unlisted）」である必要がある（「非公開」は再生不可）。面接練習動画は限定公開を推奨
@@ -143,7 +163,7 @@ MVP（フェーズ1）で実装する機能と、フェーズ2以降に回す機
 - ホスティング：AWS（クレジット活用、**クレジット枯渇後も低コストで維持できる軽量構成**）
   - フロント：AWS Amplify Hosting（React SPA、無料枠内でほぼ収まる）
   - バックエンド＋DB：**AWS Lightsail の小型インスタンス1台**（月$5〜程度）にNode.js/Express＋**SQLite**を同居させる構成を第一候補とする
-    - 単一ユーザー・低トラフィックのためSQLiteで十分。永続ディスク上にDBファイルを置き、定期バックアップ（S3へのスナップショット等）を設定
+    - 単一ユーザー・低トラフィックのためSQLiteで十分。永続ディスク上にDBファイルを置き、定期バックアップ（S3へのスナップショット等）を設定 **バックアップはフェーズ1ではいったん保留**
     - 将来マルチユーザー化や負荷増があればRDS (PostgreSQL)へ移行（SQLite→Postgresはスキーマ互換性が高く移行しやすい）
 - **APIキーの管理**：Anthropic API・GitHub OAuthのクライアントシークレット等は、すべてバックエンド（Express）側の環境変数として保持する。フロントエンド（React SPA）には一切埋め込まない。UMPIRE生成・翻訳サジェストは必ずExpress経由でAnthropic APIを呼び出し、ブラウザから直接APIキーで叩くことはしない
 
@@ -173,6 +193,7 @@ MVP（フェーズ1）で実装する機能と、フェーズ2以降に回す機
   - problem_statement（UMPIRE生成用に貼り付けた問題文、任意）
   - video_url（YouTube動画URL。MVPでは手動登録、フェーズ2で自動アップロード後に自動設定）
   - transcript（録画の文字起こし全文。任意、TEXTカラム。`leetcode-interview-prep`側で生成した`.txt`をブラウザのFile API経由で読み込むか、手動貼り付けで保存。5.3参照）
+  - retrospective（できなかったこと・つまずいた点の自由記述。任意、TEXTカラム。旧UMPIREのU/M/P記述欄の簡略版。5.3・5.4のpush本文フォーマット参照）
   - github_pushed（push済みフラグ、任意）
   - created_at / updated_at
   - ※カテゴリーはproblem_id経由でProblemマスタから取得（マスタ外の問題のみcategory_idを直接保持）
@@ -196,6 +217,7 @@ MVP（フェーズ1）で実装する機能と、フェーズ2以降に回す機
 **実装注記**：`QuizLog.phrase_ids`のような配列項目は、SQLiteに配列型が存在しないため**JSON文字列としてTEXTカラムに保存**する（SQLiteのJSON1拡張でクエリも可能）。他の将来的なリスト項目も同様の方針とする。
 
 ## 8. 技術スタック
+- パッケージマネージャ：**pnpm**（npm/yarnは使わない。2026-07-04決定。詳細は`CLAUDE.md`参照）
 - フロントエンド：React（Vite）+ TypeScript + Tailwind
 - バックエンド：Node.js（Express）+ TypeScript
 - ホスティング：
@@ -212,15 +234,20 @@ MVP（フェーズ1）で実装する機能と、フェーズ2以降に回す機
 - MVPスコープ：問題マスタ（NeetCode 150）／進捗ダッシュボード（網羅率＋総アタック数）／解答記録（オートコンプリート＋英日フレーズ登録＋Video URL＋文字起こし取り込み）／UMPIRE解説生成（Problem単位で保存・再利用）／フラッシュカード復習（1日1回3問、JST基準）／GitHub手動push／過去データの一括インポート／記録閲覧（YouTube埋め込み＋文字起こし表示）
 - 文字起こし：生成自体は`leetcode-interview-prep`側のmacOS専用スクリプト（Swift/SpeechAnalyzer）でローカル実行し、アプリはブラウザのFile API経由で`.txt`を読み込んで保存・表示するだけ（バックエンドのホスティング先に依存しない設計）
 - GitHub連携：既存リポジトリ`problems/`配下、カテゴリ別フォルダ（kebab-case）、新規ファイルは`{番号}-{slug}.md`形式、再挑戦は自動採番で`-2`連番。既存ファイルは触らない。push前に上書き警告チェックあり
+- push本文フォーマット：フロントマターなし。見出し（問題名・挑戦回数・日付）＋Code＋English（フレーズ英日ペア）＋Could Not Do（retrospective）の固定テンプレート（5.4・Q16参照）
 - フェーズ2：英語メモの一覧・検索ビュー／優先出題ロジック／YouTube自動アップロード
-- 技術スタック：React(Vite)+TS / Node.js(Express)+TS / Amplify Hosting + Lightsail(SQLite) / GitHub OAuth
+- 技術スタック：pnpm / React(Vite)+TS / Node.js(Express)+TS / Amplify Hosting + Lightsail(SQLite) / GitHub OAuth
 - AIモデル使い分け：UMPIRE生成=Sonnet系、翻訳サジェスト=Haiku系。APIキーはすべてバックエンド側で管理
 
 ## 10. 残る論点（すべて解決済み ✅）
 - ✅ 認証：GitHub OAuth
 - ✅ レスポンシブ：必須（閲覧はスマホ、編集は主にPC）
 - ✅ ホスティング：AWS（Amplify Hosting + Lightsail/SQLite の軽量構成）
+- ✅ フロント⇔バックエンドの接続方式：**カスタムドメインは購入しない**。Amplify Hostingの
+  リライト機能で`/api/<*>``/auth/<*>`をLightsailへプロキシする方式を採用（2026-07-04決定）。
+  ブラウザは常に同一オリジン扱いになるためCORS設定・証明書運用が不要（`docs/infra-setup.md`参照）
 - ✅ GitHubリポジトリ構成：既存リポジトリ`problems/`配下・kebab-case命名で確定
+- ✅ GitHub pushトークン：Fine-grained PAT（対象リポジトリ1つ・Contents読み書きのみ）を`GITHUB_PUSH_TOKEN`として保持。ログイン用OAuthとは分離（2026-07-04決定）
 - ✅ 網羅率の精度：NeetCode 150問題マスタ＋オートコンプリートで表記ゆれを防止
 - ✅ 過去データ：開発時にインポートスクリプトで一括投入
 
@@ -240,11 +267,15 @@ MVP（フェーズ1）で実装する機能と、フェーズ2以降に回す機
 ## 12. 事前準備リスト（人間側の作業・Claude Codeでは代行不可）
 - AWSアカウント作成、Lightsail小型インスタンスの起動
 - GitHub OAuth Appの登録（Settings > Developer settings > OAuth Apps）し、Client ID / Client Secretを発行
+- GitHub Fine-grained PATの発行（Settings > Developer settings > Personal access tokens > Fine-grained tokens）。
+  対象リポジトリを`leetcode-interview-prep`のみに限定し、Permissionsは`Contents: Read and write`のみ付与する
+  （push用。ログイン用OAuthとは別トークン。詳細は`docs/design/05-open-questions.md` Q8参照）
 - Anthropic APIキーの発行（console.anthropic.com）
 - 上記のシークレット類を`.env`にまとめる（下記想定変数名）：
   - `ANTHROPIC_API_KEY`
   - `GITHUB_CLIENT_ID` / `GITHUB_CLIENT_SECRET`
   - `GITHUB_ALLOWED_USERNAME`（単一ユーザー制限用。このGitHubユーザー名以外はログイン不可にする）
+  - `GITHUB_PUSH_TOKEN`（Fine-grained PAT。push専用。ログイン用OAuthとは別）
   - `SESSION_SECRET`
   - `DB_PATH`（SQLiteファイルの保存先パス）
   - `GITHUB_REPO_OWNER` / `GITHUB_REPO_NAME`（`asab0o` / `leetcode-interview-prep`）
