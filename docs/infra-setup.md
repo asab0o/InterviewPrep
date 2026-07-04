@@ -239,16 +239,22 @@ Amplifyコンソール → 対象アプリ → 「ホスティング」→「リ
 
 ## 8. GitHub OAuth Appの登録（12章）
 
+> **前後関係の注意**：Homepage URL・Callback URLには本来9章で作るAmplifyのドメインを指定するが、
+> この時点ではまだAmplifyアプリが存在しない。GitHub OAuth AppのURLは登録後いつでも編集できるため、
+> ここでは**仮のURL（例：`https://example.com`）で登録**しておき、9章でAmplifyのドメインが確定した
+> 時点でOAuth App設定画面に戻ってURLだけ実際の値に差し替えればよい（Client ID/Secretは変わらない）。
+
 1. GitHub → 右上アイコン → Settings → Developer settings → OAuth Apps → New OAuth App
 2. Application name: 任意（例: `InterviewPrep`）
-3. Homepage URL: AmplifyのURL（例: `https://main.xxxxx.amplifyapp.com`）
-4. Authorization callback URL: **Amplifyのドメイン配下**のコールバックエンドポイント
-   （プロキシ方式のため、ブラウザからは常にAmplifyのドメインにアクセスする。
-   例: `https://main.xxxxx.amplifyapp.com/auth/github/callback`。7.2のリライトルールにより
-   実体はLightsail上のExpressが処理する。パス自体はimplementer側の実装に合わせて確定させること）
+3. Homepage URL: 仮のURL（例: `https://example.com`。9章のAmplify作成後に本来の値へ差し替える）
+4. Authorization callback URL: 仮のURL（例: `https://example.com/auth/github/callback`。
+   9章でAmplifyのドメインが確定したら **Amplifyのドメイン配下**のコールバックエンドポイント
+   （例: `https://main.xxxxx.amplifyapp.com/auth/github/callback`。プロキシ方式のため、ブラウザから
+   は常にAmplifyのドメインにアクセスする。7.2のリライトルールにより実体はLightsail上のExpressが
+   処理する。パス自体はimplementer側の実装に合わせて確定させること）に差し替える
 5. 発行された Client ID / Client Secret を `.env` の `GITHUB_CLIENT_ID` / `GITHUB_CLIENT_SECRET` に設定
 6. `.env` の `GITHUB_ALLOWED_USERNAME` に自分のGitHubユーザー名（`asab0o`）を設定
-   （13章：このユーザー名以外はログイン不可にする単一ユーザー制限）
+   （13章：このユーザー名以外はログイン不可にする単一ユーザー制限。これはURLと無関係なので今設定してよい）
 
 ---
 

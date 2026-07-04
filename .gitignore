@@ -11,6 +11,9 @@ build/
 npm-debug.log*
 pnpm-debug.log*
 
+# ??
+.npm-cache/
+
 # SQLite（ローカル開発用のDBファイル。誤ってコミットしないため）
 *.sqlite
 *.sqlite3

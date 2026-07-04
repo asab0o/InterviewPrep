@@ -1,0 +1,64 @@
+name: Frontend CI (build check)
+
+on:
+  pull_request:
+    paths:
+      - "frontend/**"
+      - ".github/workflows/frontend-ci.yml"
+  push:
+    branches: [main]
+    paths:
+      - "frontend/**"
+      - ".github/workflows/frontend-ci.yml"
+
+# --------------------------------------------------------------------------
+# 注意：このワークフローはAmplify Hostingへのデプロイそのものは行わない。
+#
+# AWS Amplify Hosting は、Amplifyコンソール側でGitHubリポジトリと直接連携（GitHub App接続）
+# させることで、対象ブランチへのpushを検知して自動的にビルド・デプロイを行うのが標準構成。
+# 追加のCI/CD構築が不要でコストもかからないため、フロントエンドの本デプロイはAmplify自身に任せる
+# （詳細は docs/deployment-cicd.md 参照）。
+#
+# このワークフローの役割は、Amplifyのビルドを待たずにPRの時点で壊れていないかを早期検知する
+# ことと、Amplifyのビルド設定（amplify.yml相当）と食い違いがないかをCI側でも検証すること。
+# --------------------------------------------------------------------------
+
+jobs:
+  build-check:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          # バージョンは frontend/package.json の packageManager フィールドから解決する（正はそこのみ）
+          package_json_file: frontend/package.json
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "24"
+          cache: "pnpm"
+          cache-dependency-path: frontend/pnpm-lock.yaml
+
+      - name: Install
+        working-directory: frontend
+        run: pnpm install --frozen-lockfile
+
+      - name: Lint (存在する場合のみ)
+        working-directory: frontend
+        # 注意：--if-present はスクリプト名の前に置くこと（後ろに置くとスクリプト側への引数として渡り、
+        # スクリプトが存在しない場合にCIが落ちる）
+        run: pnpm run --if-present lint
+
+      - name: Type check (存在する場合のみ)
+        working-directory: frontend
+        run: pnpm run --if-present typecheck
+
+      - name: Build
+        working-directory: frontend
+        run: pnpm run build
+
+      - name: Test (存在する場合のみ)
+        working-directory: frontend
+        run: pnpm run --if-present test

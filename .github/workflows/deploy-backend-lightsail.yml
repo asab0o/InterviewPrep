@@ -1,0 +1,110 @@
+name: Deploy Backend to Lightsail
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - "backend/**"
+      - "infra/scripts/deploy-backend.sh"
+      - "infra/pm2/ecosystem.config.js.template"
+      - ".github/workflows/deploy-backend-lightsail.yml"
+  workflow_dispatch: {}
+
+# --------------------------------------------------------------------------
+# 前提となるGitHub Secrets（Settings > Secrets and variables > Actions）:
+#   LIGHTSAIL_HOST             Lightsailの静的IP（terraform output の lightsail_static_ip）
+#   LIGHTSAIL_SSH_USER         SSHユーザー名（Ubuntuブループリントの場合 "ubuntu"）
+#   LIGHTSAIL_SSH_PRIVATE_KEY  Lightsailにインポートした鍵ペアの秘密鍵（PEM全文）
+#
+# 前提ディレクトリ構成: backend/ 配下にExpress(TypeScript)アプリがある想定。
+# 実際のリポジトリ構成が design-planner / implementer 側で確定したら、
+# paths / working-directory をあわせて調整すること（要確認事項）。
+#
+# .env は初回セットアップ時に /opt/app/shared/.env としてサーバー上に手動配置し、
+# 以降このワークフローが上書きすることは一切ない（infra/scripts/deploy-backend.sh がシンボリックリンクするだけ）。
+# --------------------------------------------------------------------------
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    concurrency:
+      group: deploy-backend
+      cancel-in-progress: false
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          # バージョンは backend/package.json の packageManager フィールドから解決する（正はそこのみ）
+          package_json_file: backend/package.json
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "24"
+          cache: "pnpm"
+          cache-dependency-path: backend/pnpm-lock.yaml
+
+      - name: Install dependencies
+        working-directory: backend
+        run: pnpm install --frozen-lockfile
+
+      - name: Build
+        working-directory: backend
+        run: pnpm run build
+
+      - name: Run tests (存在する場合のみ)
+        working-directory: backend
+        # --if-present はスクリプト名の前に置く（後ろだとスクリプト側への引数になる）
+        run: pnpm run --if-present test
+
+      - name: Prepare SSH key
+        run: |
+          mkdir -p ~/.ssh
+          echo "${{ secrets.LIGHTSAIL_SSH_PRIVATE_KEY }}" > ~/.ssh/deploy_key
+          chmod 600 ~/.ssh/deploy_key
+          ssh-keyscan -H "${{ secrets.LIGHTSAIL_HOST }}" >> ~/.ssh/known_hosts
+
+      - name: Create release directory on server
+        env:
+          RELEASE_ID: ${{ github.sha }}
+        run: |
+          ssh -i ~/.ssh/deploy_key "${{ secrets.LIGHTSAIL_SSH_USER }}@${{ secrets.LIGHTSAIL_HOST }}" \
+            "mkdir -p /opt/app/releases/${RELEASE_ID}"
+
+      - name: Upload build artifacts (rsync)
+        env:
+          RELEASE_ID: ${{ github.sha }}
+        run: |
+          rsync -az --delete \
+            -e "ssh -i ~/.ssh/deploy_key -o StrictHostKeyChecking=no" \
+            backend/dist backend/package.json backend/pnpm-lock.yaml \
+            "${{ secrets.LIGHTSAIL_SSH_USER }}@${{ secrets.LIGHTSAIL_HOST }}:/opt/app/releases/${RELEASE_ID}/"
+
+      - name: Upload deploy script & pm2 config
+        env:
+          RELEASE_ID: ${{ github.sha }}
+        run: |
+          scp -i ~/.ssh/deploy_key -o StrictHostKeyChecking=no \
+            infra/scripts/deploy-backend.sh \
+            infra/pm2/ecosystem.config.js.template \
+            "${{ secrets.LIGHTSAIL_SSH_USER }}@${{ secrets.LIGHTSAIL_HOST }}:/opt/app/releases/${RELEASE_ID}/"
+
+      - name: Run remote deploy script
+        env:
+          RELEASE_ID: ${{ github.sha }}
+        run: |
+          ssh -i ~/.ssh/deploy_key -o StrictHostKeyChecking=no \
+            "${{ secrets.LIGHTSAIL_SSH_USER }}@${{ secrets.LIGHTSAIL_HOST }}" \
+            "cp /opt/app/releases/${RELEASE_ID}/ecosystem.config.js.template /opt/app/releases/${RELEASE_ID}/ecosystem.config.js && \
+             chmod +x /opt/app/releases/${RELEASE_ID}/deploy-backend.sh && \
+             bash /opt/app/releases/${RELEASE_ID}/deploy-backend.sh ${RELEASE_ID}"
+
+      - name: Health check
+        run: |
+          # プロキシ方式（ドメイン・証明書を使わない構成）のため、Lightsailへは
+          # 常にHTTPで直接疎通確認する（ブラウザ経由のHTTPSアクセスはAmplify側で確認する）。
+          sleep 5
+          curl -fsS "http://${{ secrets.LIGHTSAIL_HOST }}/health"

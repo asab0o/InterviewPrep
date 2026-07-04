@@ -1,0 +1,31 @@
+// ============================================================
+// pm2設定テンプレート。
+// デプロイ時に /opt/app/releases/<sha>/ecosystem.config.js としてコピーされ、
+// infra/scripts/deploy-backend.sh から参照される。
+//
+// 実際のbackendディレクトリ構成（ビルド成果物のエントリポイント名等）が確定したら、
+// script のパスを調整すること。
+// ============================================================
+module.exports = {
+  apps: [
+    {
+      name: "interview-prep-api",
+      cwd: __dirname,
+      script: "dist/index.js", // TypeScriptビルド後のエントリポイントに合わせて調整すること
+      instances: 1,
+      exec_mode: "fork",
+      env: {
+        NODE_ENV: "production",
+      },
+      // pm2に`env_file`オプションは存在しないため、.envの読み込みはExpress側（dotenv）の責務にする。
+      // deploy-backend.shが/opt/app/shared/.envをリリースディレクトリ直下にシンボリックリンクするため、
+      // アプリ起動時に`dotenv`がcwd（=このディレクトリ）の.envを自動で読み込む
+      max_memory_restart: "300M",
+      autorestart: true,
+      watch: false,
+      out_file: "/opt/app/shared/logs/out.log",
+      error_file: "/opt/app/shared/logs/error.log",
+      time: true,
+    },
+  ],
+};
