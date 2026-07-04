@@ -12,6 +12,10 @@
 - セッションCookie：`SameSite=Lax; Secure` を本番で固定設定する（Amplify側は常にHTTPSなので
   ブラウザ視点の接続は常にSecure要件を満たす。Lightsail⇔nginx⇔CloudFront間はHTTPだが、
   これはCookieのSecure判定に影響しない＝Expressで`trust proxy`によるプロトコル判定は不要）。
+- **セッションストア**：`express-session`の既定である`MemoryStore`は使わない（プロセス再起動・
+  デプロイのたびに全ログアウトになるため）。`better-sqlite3-session-store`を採用し、
+  `01-db-schema.md`で使う`better-sqlite3`と同一のDBコネクション・同一の`DB_PATH`（`app.db`）を
+  そのまま共有する（単一ユーザー・低トラフィックのため、セッション専用DBを別途用意する必要はない）。
 
 ### 認証・単一ユーザー制限をどのミドルウェアで担保するか（13章）
 2層で担保する。
@@ -124,7 +128,11 @@ type TrendResponse = { granularity: 'weekly' | 'monthly'; points: TrendPoint[] }
 
 ```ts
 // 共通：フレーズ入力（英日ペア）
-type PhraseInput = { englishText: string; japaneseText: string };
+type PhraseInput = {
+  id?: number;               // PUTでの差分更新にのみ使用。POSTでは常に未指定
+  englishText: string;
+  japaneseText: string;
+};
 
 // POST /api/attempts  リクエスト
 type CreateAttemptRequest = {
@@ -169,7 +177,15 @@ type AttemptDetail = {
   createdAt: string; updatedAt: string;
 };
 ```
-> PUT は同じ `CreateAttemptRequest` 形状。phrases は差分ではなく全置換（既存削除→再作成）でシンプルに保つ。attempt_number は編集時に再採番しない。
+> PUT は同じ `CreateAttemptRequest` 形状。attempt_number は編集時に再採番しない。
+>
+> **phrasesは全置換ではなく差分更新**（`id`の有無で判定）：
+> - `id`ありの要素：該当Phraseの`englishText`/`japaneseText`をUPDATE（このAttemptに属さない`id`が来た場合は無視）
+> - `id`なしの要素：新規INSERT
+> - リクエストに含まれない既存`id`：DELETE
+>
+> 全置換（既存削除→再作成）にすると編集のたびにPhrase.idが変わり、QuizLog.phrase_idsの参照が壊れる、
+> フェーズ2で追加予定のreview_count等の付随情報もリセットされてしまうため、この差分方式を採用する。
 
 ---
 
@@ -250,11 +266,16 @@ type GithubPushRequest = {
 type GithubPushResponse = { path: string; commitUrl: string; sha: string };
 ```
 **サーバー側ロジック（5.4）**：
-1. Attempt から `category.slug` / `number` / `slug` / `attemptNumber` を解決しパス算出。
-2. GitHub Contents API で同一パスの存在チェック。
-3. 存在し、かつ `force !== true` → **409 Conflict**（`{ error.code: 'FILE_EXISTS' }`）を返しフロントで警告表示。ユーザーが続行を選ぶと `force: true` で再送。
-4. **競合回避ルール**：`createdByApp === false`（既存Obsidianファイル）へのpushは `force` でも拒否する方針とするか要確認 Q7。既定は「アプリ生成パス以外は触らない」。
-5. 成功時 `attempts.githubPushed = true`、`attempts.githubPath = path` を保存。
+1. **カテゴリー必須チェック**：パス規則が`problems/{category.slug}/...`のため、pushにはカテゴリーの解決が必須。
+   マスタ問題（`problemId`あり）は`problem.categoryId`から解決できるので問題ないが、マスタ外問題
+   （`problemId === null`）は`attempts.categoryId`が`NULL`だと解決不能。その場合は**push前に400を返す**
+   （`{ error.code: 'CATEGORY_REQUIRED', message: 'マスタ外問題はカテゴリーを設定してからpushしてください' }`）。
+   `attempts.categoryId`自体はDBスキーマ上NULL許容のまま（push機能を使わないAttemptまで必須にする必要はないため）。
+2. Attempt から `category.slug` / `number` / `slug` / `attemptNumber` を解決しパス算出。
+3. GitHub Contents API で同一パスの存在チェック。
+4. 存在し、かつ `force !== true` → **409 Conflict**（`{ error.code: 'FILE_EXISTS' }`）を返しフロントで警告表示。ユーザーが続行を選ぶと `force: true` で再送。
+5. **競合回避ルール（Q7解決済み）**：`createdByApp === false`（既存Obsidianファイル）へのpushは`force`でも拒否する（安全側に倒す。`docs/design/05-open-questions.md` Q7参照）。
+6. 成功時 `attempts.githubPushed = true`、`attempts.githubPath = path` を保存。
 
 **Markdown本文組み立て（`content` 省略時。5.4・Q16解決済み）**：フロントマターなし。以下の固定テンプレートで組み立てる。
 

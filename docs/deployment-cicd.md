@@ -108,7 +108,6 @@ IAM OIDC Identity Providerの設定が許容できるなら移行を推奨しま
 |---|---|---|
 | `ANTHROPIC_API_KEY` 等アプリ用.env変数 | Lightsailサーバー上の`/opt/app/shared/.env`のみ | CIからは一切触らない（コードのみデプロイ） |
 | `LIGHTSAIL_SSH_PRIVATE_KEY` | GitHub Actions Secrets | バックエンドデプロイ時のSSH接続にのみ使用 |
-| `backup_uploader`のIAMアクセスキー | Lightsailサーバー上の`aws configure`（`~/.aws/credentials`） | バックアップスクリプトのS3アップロードにのみ使用。GitHubには一切保存しない |
 | `AWS_ACCESS_KEY_ID`/`SECRET`（Amplify用） | GitHub Actions Secrets | 手動再デプロイワークフローでのみ使用 |
 
 ---
