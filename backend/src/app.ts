@@ -1,0 +1,45 @@
+import express, { type ErrorRequestHandler } from "express";
+import session from "express-session";
+import createSqliteStore from "better-sqlite3-session-store";
+import type Database from "better-sqlite3";
+import type { AuthConfig } from "./config";
+import { configurePassport } from "./auth/passport";
+import { createAuthRouter } from "./auth/routes";
+import { createRequireAuth } from "./middleware/require-auth";
+
+const SqliteStore = createSqliteStore(session);
+
+export function createApp(config: AuthConfig, sqlite: Database.Database) {
+  const app = express();
+  const passport = configurePassport(config);
+  const requireAuth = createRequireAuth(config.githubAllowedUsername);
+
+  if (config.isProduction) app.set("trust proxy", 1);
+  app.use(express.json());
+  app.use(session({
+    name: "interviewprep.sid",
+    secret: config.sessionSecret,
+    resave: false,
+    saveUninitialized: false,
+    store: new SqliteStore({ client: sqlite }),
+    cookie: {
+      httpOnly: true,
+      sameSite: "lax",
+      secure: config.isProduction,
+      maxAge: 7 * 24 * 60 * 60 * 1000,
+    },
+  }));
+  app.use(passport.initialize());
+  app.use(passport.session());
+
+  app.get("/health", (_req, res) => res.json({ status: "ok" }));
+  app.use("/auth", createAuthRouter(passport, requireAuth));
+  app.use("/api", requireAuth);
+
+  const errorHandler: ErrorRequestHandler = (error, _req, res, _next) => {
+    console.error(error);
+    res.status(500).json({ error: { code: "INTERNAL_ERROR", message: "Internal server error" } });
+  };
+  app.use(errorHandler);
+  return app;
+}

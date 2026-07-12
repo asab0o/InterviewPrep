@@ -1,0 +1,82 @@
+export const CATEGORY_SEED = [
+  { name: "Arrays and Hashing", slug: "array-hashmap", sortOrder: 1 },
+  { name: "Two Pointers", slug: "two-pointers", sortOrder: 2 },
+  { name: "Sliding Window", slug: "sliding-window", sortOrder: 3 },
+  { name: "Stack", slug: "stack", sortOrder: 4 },
+  { name: "Binary Search", slug: "binary-search", sortOrder: 5 },
+  { name: "Linked List", slug: "linked-list", sortOrder: 6 },
+  { name: "Trees", slug: "trees", sortOrder: 7 },
+] as const;
+
+type ProblemSeed = {
+  categorySlug: string;
+  number: number;
+  title: string;
+  slug: string;
+};
+
+const p = (categorySlug: string, number: number, title: string, slug: string): ProblemSeed => ({
+  categorySlug, number, title, slug,
+});
+
+export const PROBLEM_SEED: ProblemSeed[] = [
+  p("array-hashmap", 217, "Contains Duplicate", "contains-duplicate"),
+  p("array-hashmap", 242, "Valid Anagram", "valid-anagram"),
+  p("array-hashmap", 1, "Two Sum", "two-sum"),
+  p("array-hashmap", 49, "Group Anagrams", "group-anagrams"),
+  p("array-hashmap", 347, "Top K Frequent Elements", "top-k-frequent-elements"),
+  p("array-hashmap", 271, "Encode and Decode Strings", "encode-and-decode-strings"),
+  p("array-hashmap", 238, "Product of Array Except Self", "product-of-array-except-self"),
+  p("array-hashmap", 36, "Valid Sudoku", "valid-sudoku"),
+  p("array-hashmap", 128, "Longest Consecutive Sequence", "longest-consecutive-sequence"),
+  p("two-pointers", 125, "Valid Palindrome", "valid-palindrome"),
+  p("two-pointers", 167, "Two Sum II - Input Array Is Sorted", "two-sum-ii-input-array-is-sorted"),
+  p("two-pointers", 15, "3Sum", "3sum"),
+  p("two-pointers", 11, "Container With Most Water", "container-with-most-water"),
+  p("two-pointers", 42, "Trapping Rain Water", "trapping-rain-water"),
+  p("sliding-window", 121, "Best Time to Buy and Sell Stock", "best-time-to-buy-and-sell-stock"),
+  p("sliding-window", 3, "Longest Substring Without Repeating Characters", "longest-substring-without-repeating-characters"),
+  p("sliding-window", 424, "Longest Repeating Character Replacement", "longest-repeating-character-replacement"),
+  p("sliding-window", 567, "Permutation in String", "permutation-in-string"),
+  p("sliding-window", 76, "Minimum Window Substring", "minimum-window-substring"),
+  p("sliding-window", 239, "Sliding Window Maximum", "sliding-window-maximum"),
+  p("stack", 20, "Valid Parentheses", "valid-parentheses"),
+  p("stack", 155, "Min Stack", "min-stack"),
+  p("stack", 150, "Evaluate Reverse Polish Notation", "evaluate-reverse-polish-notation"),
+  p("stack", 739, "Daily Temperatures", "daily-temperatures"),
+  p("stack", 853, "Car Fleet", "car-fleet"),
+  p("stack", 84, "Largest Rectangle in Histogram", "largest-rectangle-in-histogram"),
+  p("binary-search", 704, "Binary Search", "binary-search"),
+  p("binary-search", 74, "Search a 2D Matrix", "search-a-2d-matrix"),
+  p("binary-search", 875, "Koko Eating Bananas", "koko-eating-bananas"),
+  p("binary-search", 33, "Search in Rotated Sorted Array", "search-in-rotated-sorted-array"),
+  p("binary-search", 153, "Find Minimum in Rotated Sorted Array", "find-minimum-in-rotated-sorted-array"),
+  p("binary-search", 981, "Time Based Key-Value Store", "time-based-key-value-store"),
+  p("binary-search", 4, "Median of Two Sorted Arrays", "median-of-two-sorted-arrays"),
+  p("linked-list", 206, "Reverse Linked List", "reverse-linked-list"),
+  p("linked-list", 21, "Merge Two Sorted Lists", "merge-two-sorted-lists"),
+  p("linked-list", 143, "Reorder List", "reorder-list"),
+  p("linked-list", 19, "Remove Nth Node From End of List", "remove-nth-node-from-end-of-list"),
+  p("linked-list", 138, "Copy List with Random Pointer", "copy-list-with-random-pointer"),
+  p("linked-list", 2, "Add Two Numbers", "add-two-numbers"),
+  p("linked-list", 141, "Linked List Cycle", "linked-list-cycle"),
+  p("linked-list", 287, "Find the Duplicate Number", "find-the-duplicate-number"),
+  p("linked-list", 146, "LRU Cache", "lru-cache"),
+  p("linked-list", 23, "Merge k Sorted Lists", "merge-k-sorted-lists"),
+  p("linked-list", 25, "Reverse Nodes in k-Group", "reverse-nodes-in-k-group"),
+  p("trees", 226, "Invert Binary Tree", "invert-binary-tree"),
+  p("trees", 104, "Maximum Depth of Binary Tree", "maximum-depth-of-binary-tree"),
+  p("trees", 543, "Diameter of Binary Tree", "diameter-of-binary-tree"),
+  p("trees", 110, "Balanced Binary Tree", "balanced-binary-tree"),
+  p("trees", 100, "Same Tree", "same-tree"),
+  p("trees", 572, "Subtree of Another Tree", "subtree-of-another-tree"),
+  p("trees", 235, "Lowest Common Ancestor of a Binary Search Tree", "lowest-common-ancestor-of-a-binary-search-tree"),
+  p("trees", 102, "Binary Tree Level Order Traversal", "binary-tree-level-order-traversal"),
+  p("trees", 199, "Binary Tree Right Side View", "binary-tree-right-side-view"),
+  p("trees", 1448, "Count Good Nodes in Binary Tree", "count-good-nodes-in-binary-tree"),
+  p("trees", 98, "Validate Binary Search Tree", "validate-binary-search-tree"),
+  p("trees", 230, "Kth Smallest Element in a BST", "kth-smallest-element-in-a-bst"),
+  p("trees", 105, "Construct Binary Tree from Preorder and Inorder Traversal", "construct-binary-tree-from-preorder-and-inorder-traversal"),
+  p("trees", 124, "Binary Tree Maximum Path Sum", "binary-tree-maximum-path-sum"),
+  p("trees", 297, "Serialize and Deserialize Binary Tree", "serialize-and-deserialize-binary-tree"),
+];
