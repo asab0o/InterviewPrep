@@ -86,7 +86,7 @@ AI連携API（翻訳サジェスト `POST /api/translate` = Haiku、UMPIRE生成
 |---|---|---|---|
 | 1 | `feature/ai-translate-api` | 翻訳サジェストAPI（Haiku） | ✅ PR #14 マージ済み |
 | 2 | `feature/ai-umpire-api` | UMPIRE生成API（Sonnet、生成/取得＋preview） | ✅ PR #15（未マージ） |
-| 3 | `feature/attempt-form-ai-ui` | フロント：翻訳サジェスト＋UMPIRE解説パネル（生成/再生成・タイトル自動反映・Add to phrases） | 次 |
+| 3 | `feature/attempt-form-ai-ui` | フロント：翻訳サジェスト＋UMPIRE解説パネル（生成/再生成・タイトル自動反映・Add to phrases） | ✅ PR #16（未マージ）。fast-follow2件は下記 |
 | 4 | `feature/github-push-api` | GitHub push API（check/push、Markdownテンプレ、kebab-caseパス、CATEGORY_REQUIRED、pushedフラグ） | 未 |
 | 5 | `feature/github-push-ui` | フロント：Pushボタン＋上書き警告ダイアログ | 未 |
 | 6 | `feature/quiz-api` | フラッシュカードAPI（`GET /api/quiz/today`、JST 1日1回・ランダム3問・QuizLog） | 未 |
@@ -134,6 +134,12 @@ AI連携API（翻訳サジェスト `POST /api/translate` = Haiku、UMPIRE生成
 - [ ] **上記4件の修正は作業ツリーに未コミット**（コミット先ブランチは人間の判断待ち。
   現在のブランチは`feature/ai-umpire-api`だが、記録フォーム関連の指摘も含むため
   別ブランチに分けるか検討中）
+- [ ] **#3のfast-follow①（Medium）**：マスタ外モードで別問題名（`customTitle`変更）に切り替えても
+  UMPIRE解説パネル・cachedバッジがリセットされない（master間切替は`useAttemptForm.ts`の
+  resetKeyで解消済み。customは固定キーのため未対応）。resetKeyに`customTitle`を加味する対応を検討
+- [ ] **#3のfast-follow②（Low）**：Add to phrasesで英語入力欄が外部から差し替わった際、
+  `PhraseEditor`内の日本語欄・`translateError`がクリアされず、再翻訳せず「追加」すると
+  UMPIRE由来の英文と無関係な古い訳の不一致ペアが保存されうる
 
 ## 残る未決定事項
 
@@ -146,10 +152,10 @@ AI連携API（翻訳サジェスト `POST /api/translate` = Haiku、UMPIRE生成
 除きすべて対応済み（2026-07-04）。バックエンド雛形（Express+TypeScript、`/health`のみ）は実装・レビュー・
 PR #3のmainへのマージまで完了。DB層も2026-07-12に実装済み。
 
-AI連携APIのバックエンド（#1翻訳・#2 UMPIRE）は実装完了。以降は上記「残タスク一覧」を#3から順に消化する。
+AI連携（#1翻訳API・#2 UMPIRE API・#3フォームAI-UI）は実装完了。以降は上記「残タスク一覧」を#4から順に消化する。
 
-1. **#3 `feature/attempt-form-ai-ui`**（次）：フロントのAI連携UI。#2（PR #15）をmainにマージしてから main から分岐
-2. 続けて #4→#5（GitHub push API/UI）、#6→#7（フラッシュカードAPI/UI）、#8（インポート）、#9（デプロイ手順ドキュメント）
+1. **#4 `feature/github-push-api`**（次）：GitHub push API。#3（PR #16）をmainにマージしてから main から分岐
+2. 続けて #5（push UI）、#6→#7（フラッシュカードAPI/UI）、#8（インポート）、#9（デプロイ手順ドキュメント）
 3. 各機能実装直後にcode-reviewerでレビュー → 人間確認 → commit/push/PR（A案・毎回確認）
    （package.jsonの`packageManager`フィールド設定を忘れないこと）
 4. 並行して人間側のインフラ構築（`docs/infra-setup.md`：AWSアカウント→Terraform apply→OAuth App登録→PAT発行）

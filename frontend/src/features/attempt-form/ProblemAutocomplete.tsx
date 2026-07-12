@@ -2,7 +2,11 @@ import { useFormContext } from "react-hook-form";
 import type { Category, Problem } from "../../types/api";
 import type { AttemptFormValues } from "./schema";
 
-const numberOrNull = (value: unknown) => value === "" ? null : Number(value);
+// react-hook-form's `setValueAs` transform runs both on user-facing DOM string values ("")
+// and on the raw defaultValues (which are already `number | null`) whenever getValues()/formState
+// is read before the field is touched. Number(null) is 0, so null must be special-cased here too,
+// otherwise an untouched select silently coerces to 0 and fails `z.number().positive()`.
+const numberOrNull = (value: unknown) => (value === "" || value === null || value === undefined) ? null : Number(value);
 
 export function ProblemAutocomplete({ categories, problems }: { categories: Category[]; problems: Problem[] }) {
   const { register, watch, setValue, formState: { errors } } = useFormContext<AttemptFormValues>();
