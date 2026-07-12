@@ -2,7 +2,7 @@ import express, { type ErrorRequestHandler } from "express";
 import session from "express-session";
 import createSqliteStore from "better-sqlite3-session-store";
 import type Database from "better-sqlite3";
-import type { AuthConfig } from "./config";
+import type { AnthropicConfig, AuthConfig } from "./config";
 import { configurePassport } from "./auth/passport";
 import { createAuthRouter } from "./auth/routes";
 import { createRequireAuth } from "./middleware/require-auth";
@@ -15,14 +15,17 @@ import { DashboardService } from "./dashboard/service";
 import { createDashboardRouter } from "./dashboard/routes";
 import { MasterService } from "./master/service";
 import { createMasterRouter } from "./master/routes";
+import { createAnthropicTranslateFn, TranslateService } from "./translate/service";
+import { createTranslateRouter } from "./translate/routes";
 
 const SqliteStore = createSqliteStore(session);
 
-export function createApp(config: AuthConfig, sqlite: Database.Database) {
+export function createApp(config: AuthConfig, sqlite: Database.Database, anthropicConfig: AnthropicConfig | null = null) {
   const app = express();
   const passport = configurePassport(config);
   const requireAuth = createRequireAuth(config.githubAllowedUsername);
   const db = drizzle(sqlite, { schema });
+  const translateService = new TranslateService(anthropicConfig ? createAnthropicTranslateFn(anthropicConfig) : null);
 
   if (config.isProduction) app.set("trust proxy", 1);
   app.use(express.json());
@@ -48,6 +51,7 @@ export function createApp(config: AuthConfig, sqlite: Database.Database) {
   app.use("/api", createMasterRouter(new MasterService(db)));
   app.use("/api/attempts", createAttemptRouter(new AttemptService(db)));
   app.use("/api/dashboard", createDashboardRouter(new DashboardService(db)));
+  app.use("/api/translate", createTranslateRouter(translateService));
 
   const errorHandler: ErrorRequestHandler = (error, _req, res, _next) => {
     if (error instanceof ApiError) {

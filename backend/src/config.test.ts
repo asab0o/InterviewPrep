@@ -1,5 +1,5 @@
 import { afterEach, describe, expect, it } from "vitest";
-import { loadAuthConfig } from "./config";
+import { loadAnthropicConfig, loadAuthConfig } from "./config";
 
 const originalEnv = { ...process.env };
 
@@ -51,5 +51,37 @@ describe("loadAuthConfig", () => {
     process.env.PUBLIC_APP_URL = "/auth/github/callback";
 
     expect(() => loadAuthConfig()).toThrow("PUBLIC_APP_URL must be an absolute URL");
+  });
+});
+
+describe("loadAnthropicConfig", () => {
+  it("returns null when ANTHROPIC_API_KEY is not set (server must still boot)", () => {
+    delete process.env.ANTHROPIC_API_KEY;
+    expect(loadAnthropicConfig()).toBeNull();
+  });
+
+  it("returns null when ANTHROPIC_API_KEY is blank", () => {
+    process.env.ANTHROPIC_API_KEY = "   ";
+    expect(loadAnthropicConfig()).toBeNull();
+  });
+
+  it("falls back to the default translate model when unset", () => {
+    process.env.ANTHROPIC_API_KEY = "sk-ant-test";
+    delete process.env.ANTHROPIC_MODEL_TRANSLATE;
+
+    expect(loadAnthropicConfig()).toEqual({
+      apiKey: "sk-ant-test",
+      translateModel: "claude-haiku-4-5-20251001",
+    });
+  });
+
+  it("uses the configured translate model when set", () => {
+    process.env.ANTHROPIC_API_KEY = "sk-ant-test";
+    process.env.ANTHROPIC_MODEL_TRANSLATE = "claude-haiku-9000";
+
+    expect(loadAnthropicConfig()).toEqual({
+      apiKey: "sk-ant-test",
+      translateModel: "claude-haiku-9000",
+    });
   });
 });
