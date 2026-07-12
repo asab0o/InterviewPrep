@@ -46,6 +46,21 @@ export type AttemptListItem = {
 export type AttemptFilters = { categoryId?: number; problemId?: number };
 
 export type Phrase = { id: number; englishText: string; japaneseText: string };
+export type PhraseInput = { id?: number; englishText: string; japaneseText: string };
+export type AttemptInput = {
+  date: string;
+  problemId: number | null;
+  customTitle?: string | null;
+  customNumber?: number | null;
+  categoryId?: number | null;
+  code?: string | null;
+  problemStatement?: string | null;
+  videoUrl?: string | null;
+  transcript?: string | null;
+  retrospective?: string | null;
+  umpireExplanation?: string | null;
+  phrases: PhraseInput[];
+};
 export type AttemptDetail = {
   id: number;
   date: string;
