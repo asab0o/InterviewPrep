@@ -4,6 +4,7 @@ import { PhraseList } from "../features/attempt-detail/PhraseList";
 import { TranscriptView } from "../features/attempt-detail/TranscriptView";
 import { YouTubeEmbed } from "../features/attempt-detail/YouTubeEmbed";
 import { useAttemptDetail } from "../features/attempt-detail/useAttemptDetail";
+import { PushButton } from "../features/github/PushButton";
 
 export function AttemptDetailPage() {
   const { id: idParam } = useParams();
@@ -29,7 +30,13 @@ export function AttemptDetailPage() {
           <h1 className="break-words text-3xl font-bold tracking-tight text-slate-950">{data.number !== null && <span className="mr-2 text-slate-400">#{data.number}</span>}{data.title}</h1>
           <p className="mt-2 text-sm text-slate-500">{data.categoryName ?? "カテゴリーなし"}</p>
         </div>
-        <Link to={`/attempts/${data.id}/edit`} className="inline-flex shrink-0 items-center justify-center rounded-lg border border-slate-300 px-4 py-2.5 text-sm font-semibold text-slate-700 hover:bg-slate-50">編集する</Link>
+        <div className="flex shrink-0 flex-col items-end gap-3 sm:flex-row sm:items-start">
+          <Link to={`/attempts/${data.id}/edit`} className="inline-flex shrink-0 items-center justify-center rounded-lg border border-slate-300 px-4 py-2.5 text-sm font-semibold text-slate-700 hover:bg-slate-50">編集する</Link>
+          {/* key={data.id}: ルートは同一要素のparamのみ変更されるため再マウントされない。attempt切り替え時に
+              PushButton内部のuseState（checkResult/successMessage）やmutation状態が別記録に持ち越されて
+              誤表示されるのを防ぐため、attempt.id が変わったら強制的に再マウントする（High 2）。 */}
+          <PushButton key={data.id} attempt={data} />
+        </div>
       </header>
 
       <Section title="Code">
