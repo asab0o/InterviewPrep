@@ -1,4 +1,4 @@
-import type { AttemptFilters, AttemptListItem } from "../types/api";
+import type { AttemptDetail, AttemptFilters, AttemptListItem } from "../types/api";
 import { apiRequest } from "./client";
 
 export const getAttempts = (filters: AttemptFilters) => {
@@ -8,3 +8,5 @@ export const getAttempts = (filters: AttemptFilters) => {
   const query = params.size ? `?${params.toString()}` : "";
   return apiRequest<AttemptListItem[]>(`/api/attempts${query}`);
 };
+
+export const getAttempt = (id: number) => apiRequest<AttemptDetail>(`/api/attempts/${id}`);
