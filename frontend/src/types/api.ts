@@ -45,6 +45,32 @@ export type AttemptListItem = {
 
 export type AttemptFilters = { categoryId?: number; problemId?: number };
 
+export type Phrase = { id: number; englishText: string; japaneseText: string };
+export type AttemptDetail = {
+  id: number;
+  date: string;
+  attemptNumber: number;
+  problemId: number | null;
+  customTitle: string | null;
+  customNumber: number | null;
+  categoryId: number | null;
+  categoryName: string | null;
+  categorySlug: string | null;
+  title: string;
+  number: number | null;
+  code: string | null;
+  problemStatement: string | null;
+  umpireExplanation: string | null;
+  videoUrl: string | null;
+  transcript: string | null;
+  retrospective: string | null;
+  githubPushed: boolean;
+  githubPath: string | null;
+  phrases: Phrase[];
+  createdAt: string;
+  updatedAt: string;
+};
+
 export type ApiErrorBody = {
   error?: { code?: string; message?: string };
 };
