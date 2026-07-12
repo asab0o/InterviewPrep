@@ -255,6 +255,12 @@ Amplifyコンソール → 対象アプリ → 「ホスティング」→「リ
 5. 発行された Client ID / Client Secret を `.env` の `GITHUB_CLIENT_ID` / `GITHUB_CLIENT_SECRET` に設定
 6. `.env` の `GITHUB_ALLOWED_USERNAME` に自分のGitHubユーザー名（`asab0o`）を設定
    （13章：このユーザー名以外はログイン不可にする単一ユーザー制限。これはURLと無関係なので今設定してよい）
+7. `.env` の `PUBLIC_APP_URL` に **Authorization callback URLのオリジン部分と同じ値**
+   （例: `https://main.xxxxx.amplifyapp.com`。httpsのAmplifyドメイン）を設定する。
+   Expressはこの値から `redirect_uri`（`${PUBLIC_APP_URL}/auth/github/callback`）を組み立ててGitHubへ送る。
+   プロキシ経路（CloudFront→nginx）では `X-Forwarded-Proto` が常に `http` になり、passportの
+   自動判定に任せると `http://...` の `redirect_uri` が送られて `redirect_uri_mismatch` になるため、
+   環境変数による絶対URL指定が必須。9章でAmplifyドメイン確定後、Callback URLの差し替えと同時にこの値も更新すること
 
 ---
 

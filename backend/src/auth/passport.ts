@@ -9,7 +9,7 @@ export function configurePassport(config: AuthConfig): typeof passport {
       {
         clientID: config.githubClientId,
         clientSecret: config.githubClientSecret,
-        callbackURL: "/auth/github/callback",
+        callbackURL: `${config.publicAppUrl}/auth/github/callback`,
         scope: ["read:user"],
         state: "enabled",
       },

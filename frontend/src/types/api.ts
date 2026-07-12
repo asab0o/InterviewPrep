@@ -4,9 +4,10 @@ export type MeResponse = {
   avatarUrl: string | null;
 };
 
+export type QuizCard = { phraseId: number; englishText: string; japaneseText: string };
 export type QuizTodayResponse = {
   alreadyShownToday: boolean;
-  cards: Array<{ id: number; englishText: string; japaneseText: string }>;
+  cards: QuizCard[];
 };
 
 export type CoverageRow = {
