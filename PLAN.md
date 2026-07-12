@@ -45,6 +45,12 @@
   （S3へのスナップショット等）を設定」という記述がまだ残っている（唯一の正となる仕様のため今回は
   文言を変更していない）。実装が進んでバックアップを本当に不要と判断するなら、要件定義書側の
   文言修正も検討すること。必要になったら`aws-infra`サブエージェントで再構築する
+- 2026-07-05：**DBマイグレーションの本番反映方式は(b)手動SSHで`drizzle-kit push`を打つ運用に決定**。
+  個人開発・単一運用者でスキーマ変更頻度も低いため、rsync対象に`drizzle/`を追加して
+  `deploy-backend.sh`で自動実行する仕組み（候補a）を整備するコストに見合わないと判断。
+  ただし手動運用の唯一のリスクは実行順序を誤ること（新コードが旧スキーマに対して動く、またはその逆）
+  なので、デプロイ手順には**「`drizzle-kit push`を先に実行 → その後pm2再起動」の順序を必ず守ること**を
+  明記する（`docs/infra-setup.md`または`docs/deployment-cicd.md`のデプロイ手順に追記予定）
 
 ## 未対応の指摘事項（実装開始前に直すべき）
 
@@ -72,21 +78,18 @@
 
 ## 残る未決定事項
 
-`docs/design/05-open-questions.md`のQ1〜Q16はすべて解決済み。以下は新規に見つかった保留中の論点：
-
-- **DBマイグレーションの本番反映方式**（2026-07-04発見・保留中）。
-  `infra/scripts/deploy-backend.sh`のマイグレーション実行はコメントアウトのままで、
-  CIのrsync対象（`dist/ package.json pnpm-lock.yaml`）にDrizzleのマイグレーションファイルも含まれていない。
-  候補：(a) migrationファイル方式＝rsync対象に`drizzle/`を追加しdeploy-backend.shで自動実行、
-  (b) 手動SSHで`drizzle-kit push`を打つ運用。実装でDB層に着手する前に決めること
+`docs/design/05-open-questions.md`のQ1〜Q16はすべて解決済み。DBマイグレーションの本番反映方式も
+2026-07-05決定済み（決定ログ参照）。現時点で新たな保留中の論点はなし。
 
 ## 次にやること（実装順の想定）
 
 「未対応の指摘事項」は`packageManager`フィールドの設定漏れ注意（実装時に思い出す用のリマインダー）を
-除きすべて対応済み（2026-07-04）。
+除きすべて対応済み（2026-07-04）。バックエンド雛形（Express+TypeScript、`/health`のみ）は実装・レビュー
+（Approve）・コミット済み（`backend-scaffold`ブランチ、PR作成待ち）。
 
 1. 人間側のインフラ構築（`docs/infra-setup.md`の手順どおり：AWSアカウント→Terraform apply→OAuth App登録→PAT発行）
-2. DBマイグレーションの本番反映方式（残る未決定事項参照）をDB層着手前に決める
-3. implementerで機能単位の実装を開始：DB層→認証→Attempt CRUD→ダッシュボード→AI連携(UMPIRE/翻訳)→GitHub push→フラッシュカード
+2. `docs/infra-setup.md`/`docs/deployment-cicd.md`のデプロイ手順に「`drizzle-kit push`を先に実行→pm2再起動」の
+   順序を明記（DBマイグレーション決定に伴う反映漏れ）
+3. implementerで機能単位の実装を継続：DB層→認証→Attempt CRUD→ダッシュボード→AI連携(UMPIRE/翻訳)→GitHub push→フラッシュカード
    （package.jsonの`packageManager`フィールド設定を忘れないこと）
 4. 各機能実装直後にcode-reviewerでレビュー
