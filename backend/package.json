@@ -2,7 +2,7 @@
   "name": "interview-prep-backend",
   "version": "0.1.0",
   "private": true,
-  "description": "海外就活準備アプリ バックエンド（Express + TypeScript）。現時点ではヘルスチェックのみのscaffold。",
+  "description": "海外就活準備アプリのバックエンド（Express + TypeScript + Drizzle ORM + SQLite）。",
   "type": "commonjs",
   "engines": {
     "node": "24.x"
@@ -13,16 +13,30 @@
     "build": "tsc -p tsconfig.json",
     "start": "node dist/index.js",
     "typecheck": "tsc --noEmit",
-    "test": "echo \"(scaffold段階のためテスト未実装)\" && exit 0"
+    "test": "vitest run",
+    "db:generate": "drizzle-kit generate",
+    "db:migrate": "drizzle-kit migrate",
+    "db:seed": "tsx src/db/seed.ts"
+  },
+  "pnpm": {
+    "onlyBuiltDependencies": [
+      "better-sqlite3",
+      "esbuild"
+    ]
   },
   "dependencies": {
+    "better-sqlite3": "^12.11.1",
     "dotenv": "^16.4.5",
+    "drizzle-orm": "^0.45.2",
     "express": "^4.21.2"
   },
   "devDependencies": {
+    "@types/better-sqlite3": "^7.6.13",
     "@types/express": "^4.17.21",
     "@types/node": "^24.0.0",
+    "drizzle-kit": "^0.31.10",
     "tsx": "^4.19.2",
-    "typescript": "^5.7.2"
+    "typescript": "^5.7.2",
+    "vitest": "^4.1.10"
   }
 }
