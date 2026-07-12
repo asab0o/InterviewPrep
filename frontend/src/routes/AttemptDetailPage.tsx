@@ -38,12 +38,13 @@ export function AttemptDetailPage() {
 
       {data.videoUrl && <Section title="Practice video"><YouTubeEmbed url={data.videoUrl} /></Section>}
 
-      <div className="grid gap-6 lg:grid-cols-2">
+      {/* 要件5.8：文字起こしはUMPIRE解説と読み比べやすいよう同一画面内に並べて配置する */}
+      <div className="grid gap-6 lg:grid-cols-2 lg:items-start">
         {data.umpireExplanation && <Section title="UMPIRE explanation"><div className="whitespace-pre-wrap text-sm leading-7 text-slate-600">{data.umpireExplanation}</div></Section>}
-        {data.problemStatement && <Section title="Problem statement"><div className="whitespace-pre-wrap text-sm leading-7 text-slate-600">{data.problemStatement}</div></Section>}
+        {data.transcript && <TranscriptView transcript={data.transcript} />}
       </div>
 
-      {data.transcript && <TranscriptView transcript={data.transcript} />}
+      {data.problemStatement && <Section title="Problem statement"><div className="whitespace-pre-wrap text-sm leading-7 text-slate-600">{data.problemStatement}</div></Section>}
       <PhraseList phrases={data.phrases} />
 
       {data.retrospective && <Section title="Could Not Do"><div className="whitespace-pre-wrap text-sm leading-7 text-slate-600">{data.retrospective}</div></Section>}
