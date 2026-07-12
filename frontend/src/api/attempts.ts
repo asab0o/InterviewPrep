@@ -1,4 +1,4 @@
-import type { AttemptDetail, AttemptFilters, AttemptListItem } from "../types/api";
+import type { AttemptDetail, AttemptFilters, AttemptInput, AttemptListItem } from "../types/api";
 import { apiRequest } from "./client";
 
 export const getAttempts = (filters: AttemptFilters) => {
@@ -10,3 +10,11 @@ export const getAttempts = (filters: AttemptFilters) => {
 };
 
 export const getAttempt = (id: number) => apiRequest<AttemptDetail>(`/api/attempts/${id}`);
+export const createAttempt = (input: AttemptInput) => apiRequest<AttemptDetail>("/api/attempts", {
+  method: "POST",
+  body: JSON.stringify(input),
+});
+export const updateAttempt = (id: number, input: AttemptInput) => apiRequest<AttemptDetail>(`/api/attempts/${id}`, {
+  method: "PUT",
+  body: JSON.stringify(input),
+});
