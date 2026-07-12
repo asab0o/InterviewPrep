@@ -13,6 +13,8 @@ import { createAttemptRouter } from "./attempts/routes";
 import { ApiError } from "./errors";
 import { DashboardService } from "./dashboard/service";
 import { createDashboardRouter } from "./dashboard/routes";
+import { MasterService } from "./master/service";
+import { createMasterRouter } from "./master/routes";
 
 const SqliteStore = createSqliteStore(session);
 
@@ -43,6 +45,7 @@ export function createApp(config: AuthConfig, sqlite: Database.Database) {
   app.get("/health", (_req, res) => res.json({ status: "ok" }));
   app.use("/auth", createAuthRouter(passport, requireAuth));
   app.use("/api", requireAuth);
+  app.use("/api", createMasterRouter(new MasterService(db)));
   app.use("/api/attempts", createAttemptRouter(new AttemptService(db)));
   app.use("/api/dashboard", createDashboardRouter(new DashboardService(db)));
 
