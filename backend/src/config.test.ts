@@ -1,5 +1,5 @@
 import { afterEach, describe, expect, it } from "vitest";
-import { loadAnthropicConfig, loadAuthConfig } from "./config";
+import { loadAnthropicConfig, loadAuthConfig, loadGithubConfig } from "./config";
 
 const originalEnv = { ...process.env };
 
@@ -104,6 +104,41 @@ describe("loadAnthropicConfig", () => {
       apiKey: "sk-ant-test",
       translateModel: "claude-haiku-4-5-20251001",
       umpireModel: "claude-sonnet-9000",
+    });
+  });
+});
+
+describe("loadGithubConfig", () => {
+  it("returns null when none of the GitHub push env vars are set (server must still boot)", () => {
+    delete process.env.GITHUB_REPO_OWNER;
+    delete process.env.GITHUB_REPO_NAME;
+    delete process.env.GITHUB_PUSH_TOKEN;
+    expect(loadGithubConfig()).toBeNull();
+  });
+
+  it("returns null when only some of the env vars are set", () => {
+    process.env.GITHUB_REPO_OWNER = "asab0o";
+    process.env.GITHUB_REPO_NAME = "leetcode-interview-prep";
+    delete process.env.GITHUB_PUSH_TOKEN;
+    expect(loadGithubConfig()).toBeNull();
+  });
+
+  it("returns null when an env var is blank", () => {
+    process.env.GITHUB_REPO_OWNER = "asab0o";
+    process.env.GITHUB_REPO_NAME = "leetcode-interview-prep";
+    process.env.GITHUB_PUSH_TOKEN = "   ";
+    expect(loadGithubConfig()).toBeNull();
+  });
+
+  it("loads the GitHub push configuration when all env vars are set", () => {
+    process.env.GITHUB_REPO_OWNER = "asab0o";
+    process.env.GITHUB_REPO_NAME = "leetcode-interview-prep";
+    process.env.GITHUB_PUSH_TOKEN = "github_pat_xyz";
+
+    expect(loadGithubConfig()).toEqual({
+      repoOwner: "asab0o",
+      repoName: "leetcode-interview-prep",
+      pushToken: "github_pat_xyz",
     });
   });
 });

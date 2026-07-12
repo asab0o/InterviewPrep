@@ -2,7 +2,7 @@ import express, { type ErrorRequestHandler } from "express";
 import session from "express-session";
 import createSqliteStore from "better-sqlite3-session-store";
 import type Database from "better-sqlite3";
-import type { AnthropicConfig, AuthConfig } from "./config";
+import type { AnthropicConfig, AuthConfig, GithubConfig } from "./config";
 import { configurePassport } from "./auth/passport";
 import { createAuthRouter } from "./auth/routes";
 import { createRequireAuth } from "./middleware/require-auth";
@@ -19,16 +19,25 @@ import { createAnthropicTranslateFn, TranslateService } from "./translate/servic
 import { createTranslateRouter } from "./translate/routes";
 import { createAnthropicUmpireFn, UmpireService } from "./umpire/service";
 import { createUmpireRouter } from "./umpire/routes";
+import { createFetchGithubClient } from "./github/client";
+import { GithubService } from "./github/service";
+import { createGithubRouter } from "./github/routes";
 
 const SqliteStore = createSqliteStore(session);
 
-export function createApp(config: AuthConfig, sqlite: Database.Database, anthropicConfig: AnthropicConfig | null = null) {
+export function createApp(
+  config: AuthConfig,
+  sqlite: Database.Database,
+  anthropicConfig: AnthropicConfig | null = null,
+  githubConfig: GithubConfig | null = null,
+) {
   const app = express();
   const passport = configurePassport(config);
   const requireAuth = createRequireAuth(config.githubAllowedUsername);
   const db = drizzle(sqlite, { schema });
   const translateService = new TranslateService(anthropicConfig ? createAnthropicTranslateFn(anthropicConfig) : null);
   const umpireService = new UmpireService(anthropicConfig ? createAnthropicUmpireFn(anthropicConfig) : null, db);
+  const githubService = new GithubService(githubConfig ? createFetchGithubClient(githubConfig) : null, db);
 
   if (config.isProduction) app.set("trust proxy", 1);
   app.use(express.json());
@@ -56,6 +65,7 @@ export function createApp(config: AuthConfig, sqlite: Database.Database, anthrop
   app.use("/api/dashboard", createDashboardRouter(new DashboardService(db)));
   app.use("/api/translate", createTranslateRouter(translateService));
   app.use("/api", createUmpireRouter(umpireService));
+  app.use("/api/github", createGithubRouter(githubService));
 
   const errorHandler: ErrorRequestHandler = (error, _req, res, _next) => {
     if (error instanceof ApiError) {

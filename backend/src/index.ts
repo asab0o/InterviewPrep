@@ -1,10 +1,10 @@
 import "dotenv/config";
 import { createApp } from "./app";
-import { loadAnthropicConfig, loadAuthConfig } from "./config";
+import { loadAnthropicConfig, loadAuthConfig, loadGithubConfig } from "./config";
 import { sqlite } from "./db/client";
 
 const PORT = Number(process.env.PORT ?? 3000);
-const app = createApp(loadAuthConfig(), sqlite, loadAnthropicConfig());
+const app = createApp(loadAuthConfig(), sqlite, loadAnthropicConfig(), loadGithubConfig());
 
 app.listen(PORT, () => {
   // eslint-disable-next-line no-console
