@@ -11,6 +11,8 @@ import * as schema from "./db/schema";
 import { AttemptService } from "./attempts/service";
 import { createAttemptRouter } from "./attempts/routes";
 import { ApiError } from "./errors";
+import { DashboardService } from "./dashboard/service";
+import { createDashboardRouter } from "./dashboard/routes";
 
 const SqliteStore = createSqliteStore(session);
 
@@ -42,6 +44,7 @@ export function createApp(config: AuthConfig, sqlite: Database.Database) {
   app.use("/auth", createAuthRouter(passport, requireAuth));
   app.use("/api", requireAuth);
   app.use("/api/attempts", createAttemptRouter(new AttemptService(db)));
+  app.use("/api/dashboard", createDashboardRouter(new DashboardService(db)));
 
   const errorHandler: ErrorRequestHandler = (error, _req, res, _next) => {
     if (error instanceof ApiError) {
