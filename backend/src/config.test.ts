@@ -68,20 +68,42 @@ describe("loadAnthropicConfig", () => {
   it("falls back to the default translate model when unset", () => {
     process.env.ANTHROPIC_API_KEY = "sk-ant-test";
     delete process.env.ANTHROPIC_MODEL_TRANSLATE;
+    delete process.env.ANTHROPIC_MODEL_UMPIRE;
 
     expect(loadAnthropicConfig()).toEqual({
       apiKey: "sk-ant-test",
       translateModel: "claude-haiku-4-5-20251001",
+      umpireModel: "claude-sonnet-5",
     });
   });
 
   it("uses the configured translate model when set", () => {
     process.env.ANTHROPIC_API_KEY = "sk-ant-test";
     process.env.ANTHROPIC_MODEL_TRANSLATE = "claude-haiku-9000";
+    delete process.env.ANTHROPIC_MODEL_UMPIRE;
 
     expect(loadAnthropicConfig()).toEqual({
       apiKey: "sk-ant-test",
       translateModel: "claude-haiku-9000",
+      umpireModel: "claude-sonnet-5",
+    });
+  });
+
+  it("falls back to the default umpire model when unset", () => {
+    process.env.ANTHROPIC_API_KEY = "sk-ant-test";
+    delete process.env.ANTHROPIC_MODEL_UMPIRE;
+
+    expect(loadAnthropicConfig()).toMatchObject({ umpireModel: "claude-sonnet-5" });
+  });
+
+  it("uses the configured umpire model when set", () => {
+    process.env.ANTHROPIC_API_KEY = "sk-ant-test";
+    process.env.ANTHROPIC_MODEL_UMPIRE = "claude-sonnet-9000";
+
+    expect(loadAnthropicConfig()).toEqual({
+      apiKey: "sk-ant-test",
+      translateModel: "claude-haiku-4-5-20251001",
+      umpireModel: "claude-sonnet-9000",
     });
   });
 });
