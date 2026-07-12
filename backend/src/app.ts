@@ -6,6 +6,11 @@ import type { AuthConfig } from "./config";
 import { configurePassport } from "./auth/passport";
 import { createAuthRouter } from "./auth/routes";
 import { createRequireAuth } from "./middleware/require-auth";
+import { drizzle } from "drizzle-orm/better-sqlite3";
+import * as schema from "./db/schema";
+import { AttemptService } from "./attempts/service";
+import { createAttemptRouter } from "./attempts/routes";
+import { ApiError } from "./errors";
 
 const SqliteStore = createSqliteStore(session);
 
@@ -13,6 +18,7 @@ export function createApp(config: AuthConfig, sqlite: Database.Database) {
   const app = express();
   const passport = configurePassport(config);
   const requireAuth = createRequireAuth(config.githubAllowedUsername);
+  const db = drizzle(sqlite, { schema });
 
   if (config.isProduction) app.set("trust proxy", 1);
   app.use(express.json());
@@ -35,8 +41,13 @@ export function createApp(config: AuthConfig, sqlite: Database.Database) {
   app.get("/health", (_req, res) => res.json({ status: "ok" }));
   app.use("/auth", createAuthRouter(passport, requireAuth));
   app.use("/api", requireAuth);
+  app.use("/api/attempts", createAttemptRouter(new AttemptService(db)));
 
   const errorHandler: ErrorRequestHandler = (error, _req, res, _next) => {
+    if (error instanceof ApiError) {
+      res.status(error.status).json({ error: { code: error.code, message: error.message } });
+      return;
+    }
     console.error(error);
     res.status(500).json({ error: { code: "INTERNAL_ERROR", message: "Internal server error" } });
   };

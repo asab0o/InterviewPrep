@@ -10,6 +10,7 @@
 設計フェーズはほぼ完了（DB/API/フロント構成、インフラ手順、CI/CD設計、シードデータまで作成済み）。
 実装フェーズ。バックエンド雛形、DB層（Drizzle ORM + SQLite、初期マイグレーション、7カテゴリー59問のシード）、
 GitHub OAuth認証（単一ユーザー制限、SQLiteセッション）まで完了。
+Attempt CRUD API（一覧・詳細・作成・編集・削除、Phrase差分更新、自動採番）まで実装済み。
 
 ## 決定ログ（日付順）
 
@@ -91,6 +92,6 @@ PR #3のmainへのマージまで完了。DB層も2026-07-12に実装済み。
 1. 人間側のインフラ構築（`docs/infra-setup.md`の手順どおり：AWSアカウント→Terraform apply→OAuth App登録→PAT発行）
 2. `docs/infra-setup.md`/`docs/deployment-cicd.md`のデプロイ手順に「`drizzle-kit push`を先に実行→pm2再起動」の
    順序を明記（DBマイグレーション決定に伴う反映漏れ）
-3. implementerで機能単位の実装を継続：Attempt CRUD→ダッシュボード→AI連携(UMPIRE/翻訳)→GitHub push→フラッシュカード
+3. implementerで機能単位の実装を継続：カテゴリー/問題マスタAPI→ダッシュボード→フロント雛形→AI連携(UMPIRE/翻訳)→GitHub push→フラッシュカード
    （package.jsonの`packageManager`フィールド設定を忘れないこと）
 4. 各機能実装直後にcode-reviewerでレビュー
