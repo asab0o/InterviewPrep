@@ -73,6 +73,12 @@ AI連携API（翻訳サジェスト `POST /api/translate` = Haiku、UMPIRE生成
   Anthropic基盤は #1 で構築（`config.ts` の `loadAnthropicConfig` はキー未設定なら null を返し、
   `ANTHROPIC_API_KEY` 未設定でもサーバー全体は起動継続。翻訳/UMPIRE呼び出し時のみ 503）。
   UMPIREは `max_tokens=8192`＋`stop_reason=max_tokens` 検知で不完全な解説をキャッシュ保存させない対応済み。
+- 2026-07-12：既存コード全体（backend/frontend、記録フォーム含む）をcode-reviewerサブエージェント
+  2体（バックエンド担当／フロントエンド担当）で並行フルレビュー。指摘のうちCritical〜Should fixの
+  4件を修正済み（作業ツリーに未コミット、下記「未対応の指摘事項」参照）。それ以外の軽微な指摘
+  （非アクティブカテゴリーの問題フィルタ漏れ`master/service.ts`、`videoUrl`空文字のバックエンド
+  バリデーション、`RequireAuth`の`location.state.from`未使用、テストファイル命名の不統一等）は
+  対応保留（ユーザー指示により今回はスキップ）
 
 ## 残タスク一覧（MVP残り。2026-07-12時点。A案・毎回確認で順次実装）
 
@@ -114,6 +120,20 @@ AI連携API（翻訳サジェスト `POST /api/translate` = Haiku、UMPIRE生成
 - [ ] **implementerがfrontend/backendのpackage.jsonを作る際、`packageManager`フィールドを必ず設定する**
   （例：`"packageManager": "pnpm@<その時点の最新安定版>"`）。CIの`pnpm/action-setup`はこのフィールドを
   参照する設定に変更済みのため、無いとCIが落ちる。`CLAUDE.md`参照
+- [x] **GitHub OAuthの`callbackURL`が本番プロキシ構成で`redirect_uri_mismatch`になりうる**
+  → 2026-07-12修正済み。`PUBLIC_APP_URL`環境変数（必須・本番はhttps必須）を追加し、
+  `backend/src/auth/passport.ts`で絶対URLを明示指定する方式に変更。`.env.example`（ルート・backend）
+  と`docs/infra-setup.md` 8章に設定手順を追記。**ローカルの`backend/.env`に
+  `PUBLIC_APP_URL=http://localhost:5173`の追記が必要**（未設定だと起動時エラーになる）
+- [x] **`QuizTodayResponse.cards`のフィールド名がAPI設計書と不一致**（`id`→正しくは`phraseId`）
+  → 2026-07-12修正済み。`frontend/src/types/api.ts`に`02-api-design.md`準拠の`QuizCard`型を追加
+- [x] **記録詳細画面で文字起こしとUMPIRE解説が要件5.8どおり「並べて」配置されていない**
+  → 2026-07-12修正済み。`AttemptDetailPage.tsx`でUMPIRE解説と文字起こしを2カラム表示に変更
+- [x] **`ErrorBoundary.tsx`が設計書（`03-frontend-structure.md`）に定義済みだが未実装**
+  → 2026-07-12修正済み。新規作成し`App.tsx`のルーター全体に`errorElement`として適用
+- [ ] **上記4件の修正は作業ツリーに未コミット**（コミット先ブランチは人間の判断待ち。
+  現在のブランチは`feature/ai-umpire-api`だが、記録フォーム関連の指摘も含むため
+  別ブランチに分けるか検討中）
 
 ## 残る未決定事項
 
