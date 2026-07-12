@@ -45,3 +45,23 @@ export function loadAuthConfig(): AuthConfig {
     publicAppUrl: loadPublicAppUrl(isProduction),
   };
 }
+
+export type AnthropicConfig = {
+  apiKey: string;
+  translateModel: string;
+};
+
+const DEFAULT_TRANSLATE_MODEL = "claude-haiku-4-5-20251001";
+
+// APIキー未設定でもサーバー全体は起動できる必要がある（翻訳/UMPIRE機能以外は動く）。
+// そのため起動時にthrowするrequiredEnvは使わず、呼び出し側（各機能のservice/route）で
+// 未設定時にApiErrorへ変換する。
+export function loadAnthropicConfig(): AnthropicConfig | null {
+  const apiKey = process.env.ANTHROPIC_API_KEY?.trim();
+  if (!apiKey) return null;
+
+  return {
+    apiKey,
+    translateModel: process.env.ANTHROPIC_MODEL_TRANSLATE?.trim() || DEFAULT_TRANSLATE_MODEL,
+  };
+}
