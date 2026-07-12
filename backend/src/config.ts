@@ -49,9 +49,11 @@ export function loadAuthConfig(): AuthConfig {
 export type AnthropicConfig = {
   apiKey: string;
   translateModel: string;
+  umpireModel: string;
 };
 
 const DEFAULT_TRANSLATE_MODEL = "claude-haiku-4-5-20251001";
+const DEFAULT_UMPIRE_MODEL = "claude-sonnet-5";
 
 // APIキー未設定でもサーバー全体は起動できる必要がある（翻訳/UMPIRE機能以外は動く）。
 // そのため起動時にthrowするrequiredEnvは使わず、呼び出し側（各機能のservice/route）で
@@ -63,5 +65,6 @@ export function loadAnthropicConfig(): AnthropicConfig | null {
   return {
     apiKey,
     translateModel: process.env.ANTHROPIC_MODEL_TRANSLATE?.trim() || DEFAULT_TRANSLATE_MODEL,
+    umpireModel: process.env.ANTHROPIC_MODEL_UMPIRE?.trim() || DEFAULT_UMPIRE_MODEL,
   };
 }

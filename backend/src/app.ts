@@ -17,6 +17,8 @@ import { MasterService } from "./master/service";
 import { createMasterRouter } from "./master/routes";
 import { createAnthropicTranslateFn, TranslateService } from "./translate/service";
 import { createTranslateRouter } from "./translate/routes";
+import { createAnthropicUmpireFn, UmpireService } from "./umpire/service";
+import { createUmpireRouter } from "./umpire/routes";
 
 const SqliteStore = createSqliteStore(session);
 
@@ -26,6 +28,7 @@ export function createApp(config: AuthConfig, sqlite: Database.Database, anthrop
   const requireAuth = createRequireAuth(config.githubAllowedUsername);
   const db = drizzle(sqlite, { schema });
   const translateService = new TranslateService(anthropicConfig ? createAnthropicTranslateFn(anthropicConfig) : null);
+  const umpireService = new UmpireService(anthropicConfig ? createAnthropicUmpireFn(anthropicConfig) : null, db);
 
   if (config.isProduction) app.set("trust proxy", 1);
   app.use(express.json());
@@ -52,6 +55,7 @@ export function createApp(config: AuthConfig, sqlite: Database.Database, anthrop
   app.use("/api/attempts", createAttemptRouter(new AttemptService(db)));
   app.use("/api/dashboard", createDashboardRouter(new DashboardService(db)));
   app.use("/api/translate", createTranslateRouter(translateService));
+  app.use("/api", createUmpireRouter(umpireService));
 
   const errorHandler: ErrorRequestHandler = (error, _req, res, _next) => {
     if (error instanceof ApiError) {
