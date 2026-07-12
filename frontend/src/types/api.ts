@@ -90,3 +90,12 @@ export type AttemptDetail = {
 export type ApiErrorBody = {
   error?: { code?: string; message?: string };
 };
+
+export type TranslateRequest = { english: string };
+export type TranslateResponse = { japanese: string };
+
+export type GenerateUmpireRequest = { problemStatement: string; force?: boolean };
+export type GenerateUmpireResponse = { umpireExplanation: string; cached: boolean; generatedAt: string };
+
+export type PreviewUmpireRequest = { problemStatement: string };
+export type PreviewUmpireResponse = { umpireExplanation: string; generatedAt: string };

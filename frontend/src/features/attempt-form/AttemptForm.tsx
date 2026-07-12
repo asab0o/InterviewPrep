@@ -4,6 +4,8 @@ import type { AttemptInput, Category, Problem } from "../../types/api";
 import { PhraseEditor } from "./PhraseEditor";
 import { ProblemAutocomplete } from "./ProblemAutocomplete";
 import { TranscriptInput } from "./TranscriptInput";
+import { UmpirePanel } from "./UmpirePanel";
+import { useAttemptForm } from "./useAttemptForm";
 import { attemptFormSchema, type AttemptFormValues } from "./schema";
 
 type Props = {
@@ -20,7 +22,18 @@ const emptyToNull = (value: string): string | null => value.trim() || null;
 
 export function AttemptForm(props: Props) {
   const methods = useForm<AttemptFormValues>({ resolver: zodResolver(attemptFormSchema), defaultValues: props.initialValues });
-  const mode = methods.watch("problemMode");
+  const {
+    mode,
+    englishDraft,
+    setEnglishDraft,
+    umpireText,
+    umpireCached,
+    isGenerating,
+    generateError,
+    generateDisabled,
+    handleGenerate,
+  } = useAttemptForm(methods, props.problems, props.initialValues.umpireExplanation || null);
+
   const submit = methods.handleSubmit((values) => props.onSubmit({
     date: values.date,
     problemId: mode === "master" ? values.problemId : null,
@@ -32,7 +45,7 @@ export function AttemptForm(props: Props) {
     videoUrl: emptyToNull(values.videoUrl),
     transcript: emptyToNull(values.transcript),
     retrospective: emptyToNull(values.retrospective),
-    umpireExplanation: emptyToNull(values.umpireExplanation),
+    umpireExplanation: mode === "custom" ? emptyToNull(values.umpireExplanation) : null,
     phrases: values.phrases.map((phrase) => ({ id: phrase.id, englishText: phrase.englishText.trim(), japaneseText: phrase.japaneseText.trim() })),
   }));
 
@@ -57,16 +70,19 @@ export function AttemptForm(props: Props) {
             <label className="block text-sm font-medium text-slate-700">振り返り
               <textarea {...methods.register("retrospective")} rows={5} className="mt-1.5 block w-full rounded-lg border-slate-300 text-sm" placeholder="できなかったこと、つまずいた点" />
             </label>
-            <PhraseEditor />
+            <PhraseEditor englishDraft={englishDraft} onEnglishDraftChange={setEnglishDraft} />
           </div>
 
-          <aside className="space-y-5 rounded-2xl border border-slate-200 bg-white p-5 shadow-sm sm:p-6 lg:sticky lg:top-6">
-            <div><p className="text-xs font-semibold uppercase tracking-wider text-blue-600">UMPIRE</p><h2 className="mt-2 text-lg font-semibold text-slate-900">問題文と解説</h2><p className="mt-1 text-sm text-slate-500">AI生成は次の機能で追加します。今回は問題文を保存できます。</p></div>
-            <label className="block text-sm font-medium text-slate-700">問題文
-              <textarea {...methods.register("problemStatement")} rows={18} className="mt-1.5 block w-full rounded-lg border-slate-300 text-sm" placeholder="問題タイトルと本文を貼り付けてください" />
-            </label>
-            {props.initialValues.umpireExplanation && <div className="rounded-xl bg-slate-50 p-4"><p className="text-xs font-semibold text-slate-500">保存済みUMPIRE解説</p><p className="mt-2 line-clamp-6 whitespace-pre-wrap text-sm text-slate-600">{props.initialValues.umpireExplanation}</p></div>}
-          </aside>
+          <UmpirePanel
+            mode={mode}
+            isGenerating={isGenerating}
+            generateError={generateError}
+            generateDisabled={generateDisabled}
+            umpireText={umpireText}
+            umpireCached={umpireCached}
+            onGenerate={handleGenerate}
+            onAddPhrase={setEnglishDraft}
+          />
         </div>
 
         {props.serverError && <p role="alert" className="rounded-lg bg-red-50 p-4 text-sm text-red-700">{props.serverError}</p>}
