@@ -68,3 +68,21 @@ export function loadAnthropicConfig(): AnthropicConfig | null {
     umpireModel: process.env.ANTHROPIC_MODEL_UMPIRE?.trim() || DEFAULT_UMPIRE_MODEL,
   };
 }
+
+export type GithubConfig = {
+  repoOwner: string;
+  repoName: string;
+  pushToken: string;
+};
+
+// ログイン用OAuthとは別のFine-grained PAT。3つのenvが揃っていなければサーバー全体は
+// 起動できる（push機能以外に影響させない）ため、loadAnthropicConfigと同様にthrowせずnullを返す。
+// 呼び出し側（GithubService）で未設定時に503 GITHUB_UNAVAILABLEへ変換する。
+export function loadGithubConfig(): GithubConfig | null {
+  const repoOwner = process.env.GITHUB_REPO_OWNER?.trim();
+  const repoName = process.env.GITHUB_REPO_NAME?.trim();
+  const pushToken = process.env.GITHUB_PUSH_TOKEN?.trim();
+  if (!repoOwner || !repoName || !pushToken) return null;
+
+  return { repoOwner, repoName, pushToken };
+}

@@ -271,6 +271,13 @@ type GithubPushResponse = { path: string; commitUrl: string; sha: string };
    （`problemId === null`）は`attempts.categoryId`が`NULL`だと解決不能。その場合は**push前に400を返す**
    （`{ error.code: 'CATEGORY_REQUIRED', message: 'マスタ外問題はカテゴリーを設定してからpushしてください' }`）。
    `attempts.categoryId`自体はDBスキーマ上NULL許容のまま（push機能を使わないAttemptまで必須にする必要はないため）。
+   同様に、マスタ外問題はファイル名生成に`number`（`attempts.customNumber`）と`title`（`attempts.customTitle`から
+   slug生成）も必須であり、いずれかが`NULL`/空文字であれば**push前に400を返す**
+   （`{ error.code: 'NUMBER_REQUIRED', message: 'マスタ外問題は問題番号を設定してからpushしてください' }` /
+   `{ error.code: 'TITLE_REQUIRED', message: 'マスタ外問題は問題名を設定してからpushしてください' }`）。
+   `customNumber`/`customTitle`自体もDBスキーマ上NULL許容のまま（push機能を使わないAttemptまで必須にする
+   必要はないため。`customTitle`はAttempt作成時のバリデーションでは必須だが、直接のDB操作等をすり抜けて
+   NULL/空文字が入るケースに備え、push解決ロジック側でも防御する）。
 2. Attempt から `category.slug` / `number` / `slug` / `attemptNumber` を解決しパス算出。
 3. GitHub Contents API で同一パスの存在チェック。
 4. 存在し、かつ `force !== true` → **409 Conflict**（`{ error.code: 'FILE_EXISTS' }`）を返しフロントで警告表示。ユーザーが続行を選ぶと `force: true` で再送。
