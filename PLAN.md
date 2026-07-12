@@ -93,6 +93,7 @@ PR #3のmainへのマージまで完了。DB層も2026-07-12に実装済み。
 1. 人間側のインフラ構築（`docs/infra-setup.md`の手順どおり：AWSアカウント→Terraform apply→OAuth App登録→PAT発行）
 2. `docs/infra-setup.md`/`docs/deployment-cicd.md`のデプロイ手順に「`drizzle-kit push`を先に実行→pm2再起動」の
    順序を明記（DBマイグレーション決定に伴う反映漏れ）
-3. implementerで機能単位の実装を継続：カテゴリー/問題マスタAPI→フロント雛形→AI連携(UMPIRE/翻訳)→GitHub push→フラッシュカード
+3. implementerで機能単位の実装を継続：ダッシュボードPRとマスタAPI PRをmainへ統合→フロント雛形→AI連携(UMPIRE/翻訳)→GitHub push→フラッシュカード
+4. implementerで機能単位の実装を継続：カテゴリー/問題マスタAPI→フロント雛形→AI連携(UMPIRE/翻訳)→GitHub push→フラッシュカード
    （package.jsonの`packageManager`フィールド設定を忘れないこと）
-4. 各機能実装直後にcode-reviewerでレビュー
+5. 各機能実装直後にcode-reviewerでレビュー
