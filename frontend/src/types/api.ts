@@ -99,3 +99,9 @@ export type GenerateUmpireResponse = { umpireExplanation: string; cached: boolea
 
 export type PreviewUmpireRequest = { problemStatement: string };
 export type PreviewUmpireResponse = { umpireExplanation: string; generatedAt: string };
+
+export type GithubCheckRequest = { attemptId: number };
+export type GithubCheckResponse = { path: string; exists: boolean; createdByApp: boolean };
+
+export type GithubPushRequest = { attemptId: number; content?: string; force?: boolean };
+export type GithubPushResponse = { path: string; commitUrl: string; sha: string };
