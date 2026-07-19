@@ -22,6 +22,8 @@ import { createUmpireRouter } from "./umpire/routes";
 import { createFetchGithubClient } from "./github/client";
 import { GithubService } from "./github/service";
 import { createGithubRouter } from "./github/routes";
+import { QuizService } from "./quiz/service";
+import { createQuizRouter } from "./quiz/routes";
 
 const SqliteStore = createSqliteStore(session);
 
@@ -66,6 +68,7 @@ export function createApp(
   app.use("/api/translate", createTranslateRouter(translateService));
   app.use("/api", createUmpireRouter(umpireService));
   app.use("/api/github", createGithubRouter(githubService));
+  app.use("/api/quiz", createQuizRouter(new QuizService(db)));
 
   const errorHandler: ErrorRequestHandler = (error, _req, res, _next) => {
     if (error instanceof ApiError) {
