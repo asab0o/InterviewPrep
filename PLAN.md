@@ -92,7 +92,7 @@ AI連携API（翻訳サジェスト `POST /api/translate` = Haiku、UMPIRE生成
 | 6 | `feature/quiz-api` | フラッシュカードAPI（`GET /api/quiz/today`、JST 1日1回・ランダム3問・QuizLog） | 未 |
 | 7 | `feature/quiz-ui` | フロント：復習画面＋ログイン後の初期表示分岐 | 未 |
 | 8 | `feature/import-script` | 過去データインポート（`problems/`配下Markdown→Attempt、開発時一回限り） | 未 |
-| 9 | `docs/deploy-migration-order` | ドキュメント：デプロイ手順に `drizzle-kit push`→pm2再起動 順序を明記（下記デプロイ節と重複、ここで消化） | 未 |
+| 9 | `docs-deploy-migration-order` | ドキュメント：デプロイ手順に `drizzle-kit push`→pm2再起動 順序を明記 | ✅ PR作成済（ブランチ名は既存`docs`ブランチと衝突したためハイフン区切りに変更） |
 
 **動作確認の前提**：#3以降のAI連携UIは実キー（`ANTHROPIC_API_KEY`）、#4-5のGitHub pushは `GITHUB_PUSH_TOKEN`
 が `.env` に必要。コード実装は鍵なしでも進むが、実疎通確認は人間が鍵を入れてから。
@@ -152,11 +152,23 @@ AI連携API（翻訳サジェスト `POST /api/translate` = Haiku、UMPIRE生成
 除きすべて対応済み（2026-07-04）。バックエンド雛形（Express+TypeScript、`/health`のみ）は実装・レビュー・
 PR #3のmainへのマージまで完了。DB層も2026-07-12に実装済み。
 
-AI連携（#1翻訳API・#2 UMPIRE API・#3フォームAI-UI）は実装完了。以降は上記「残タスク一覧」を#4から順に消化する。
+**#1〜#9のMVP実装タスクはすべて完了**（2026-07-20）。以降は「コードを書く」フェーズから
+「実際に動かす」フェーズへ移る。残っているのは**人間側の作業と実疎通確認**が中心。
 
-1. **#4 `feature/github-push-api`**（次）：GitHub push API。#3（PR #16）をmainにマージしてから main から分岐
-2. 続けて #5（push UI）、#6→#7（フラッシュカードAPI/UI）、#8（インポート）、#9（デプロイ手順ドキュメント）
-3. 各機能実装直後にcode-reviewerでレビュー → 人間確認 → commit/push/PR（A案・毎回確認）
-   （package.jsonの`packageManager`フィールド設定を忘れないこと）
-4. 並行して人間側のインフラ構築（`docs/infra-setup.md`：AWSアカウント→Terraform apply→OAuth App登録→PAT発行）
-   と `.env` への実キー投入（AI連携・GitHub pushの実疎通確認に必要）
+1. **人間側のインフラ構築**（`docs/infra-setup.md` の手順どおり）：AWSアカウント→Terraform apply→
+   Lightsail初回SSH→nginx配置→GitHub OAuth App登録→Fine-grained PAT発行→Amplify Hosting作成
+2. **`.env` への実キー投入**：`ANTHROPIC_API_KEY` / `GITHUB_CLIENT_ID`・`SECRET` / `GITHUB_PUSH_TOKEN` /
+   `SESSION_SECRET` / `PUBLIC_APP_URL` など（12章）。**ローカルの`backend/.env`に
+   `PUBLIC_APP_URL=http://localhost:5173` の追記が必要**（未設定だと起動時エラー）
+3. **実疎通確認（E2E）**：これまでの実装は全てAPIをモックしたテストのみで、実キーでの疎通は未実施。
+   最低限これらを実機確認すること：
+   - GitHub OAuthログイン（単一ユーザー制限が効くか）
+   - 翻訳サジェスト・UMPIRE生成（Anthropic実呼び出し、コスト感の確認）
+   - GitHub push（check→上書き警告→push、既存Obsidianファイルが拒否されるか）
+   - フラッシュカード（JST基準で日付が変わると再出題されるか）
+4. **過去データのインポート**：`pnpm run import:legacy -- --dry-run` で結果を確認してから本実行
+   （冪等なので複数回実行しても重複しないが、まず必ずdry-runで確認すること）
+5. **fast-follow**（#3の残課題2件。「未対応の指摘事項」参照）を必要に応じて対応
+
+なお `docs/requirements.md` 8章のバックアップ記述は「**バックアップはフェーズ1ではいったん保留**」と
+既に明記されており、バックアップ機構削除（2026-07-04決定）と矛盾しないため**変更不要**と判断した（2026-07-20確認）。
