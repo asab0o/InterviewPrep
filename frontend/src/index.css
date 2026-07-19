@@ -11,3 +11,26 @@
     @apply focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent;
   }
 }
+
+@layer utilities {
+  @keyframes card-flip {
+    from {
+      transform: rotateY(90deg);
+      opacity: 0;
+    }
+    to {
+      transform: rotateY(0deg);
+      opacity: 1;
+    }
+  }
+
+  .animate-card-flip {
+    animation: card-flip 250ms ease-out;
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .animate-card-flip {
+      animation: none;
+    }
+  }
+}
