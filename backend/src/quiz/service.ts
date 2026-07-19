@@ -2,7 +2,7 @@ import { eq, sql } from "drizzle-orm";
 import type { BetterSQLite3Database } from "drizzle-orm/better-sqlite3";
 import * as schema from "../db/schema";
 import { phrases, quizLogs } from "../db/schema";
-import { jstToday } from "./jst";
+import { jstToday } from "../lib/jst";
 
 type Db = BetterSQLite3Database<typeof schema>;
 
