@@ -318,6 +318,27 @@ applications:
 
 GitHub Actions経由の自動デプロイ（`docs/deployment-cicd.md`参照）を有効化する前に、初回は手動で動作確認することを推奨します。
 
+> **⚠️ DBマイグレーションの実行順序（必ず守ること）**
+>
+> DBマイグレーションの本番反映は **手動SSHで `drizzle-kit push` を打つ運用**（2026-07-05決定。
+> 個人開発・単一運用者でスキーマ変更頻度も低いため、デプロイスクリプトへの組み込みはしない）。
+>
+> スキーマ変更を含むリリースでは、必ず **`drizzle-kit push` を先に実行 → その後 pm2 再起動（reload）** の
+> 順序で行う。順序を誤ると、新しいコードが旧スキーマに対して動く（またはその逆）状態が発生し、
+> 実行時エラーやデータ不整合の原因になる。手動運用における唯一かつ最大のリスクがこの順序ミス。
+>
+> スキーマ変更を含まないリリース（アプリコードのみの変更）では `drizzle-kit push` は不要。
+>
+> ```bash
+> # 1) 先にマイグレーションを本番DBへ反映
+> ssh -i ~/.ssh/lightsail_interview_prep ubuntu@<static-ip>
+> cd /opt/app/current
+> pnpm exec drizzle-kit push      # DB_PATH は /opt/app/shared/.env から読まれる
+> exit
+>
+> # 2) その後にアプリを配置・再起動（下記の手順、またはGitHub Actionsの自動デプロイ）
+> ```
+
 ```bash
 # ローカルでbackendをビルド（パッケージマネージャはpnpm。CLAUDE.md参照）
 cd backend

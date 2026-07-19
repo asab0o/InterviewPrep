@@ -51,6 +51,34 @@ push to main (backend/**)
 > パッケージマネージャは **pnpm** を採用（npm/yarnは使わない）。サーバー上ではNode.js同梱のCorepack経由で
 > 有効化する（`infra/scripts/bootstrap.sh`参照）。詳細は `CLAUDE.md` 参照。
 
+### DBマイグレーションの反映（自動デプロイの対象外・手動SSH運用）
+
+**このワークフローはDBマイグレーションを実行しません。** マイグレーションの本番反映は
+**手動SSHで `drizzle-kit push` を打つ運用**です（2026-07-05決定。個人開発・単一運用者で
+スキーマ変更頻度も低いため、rsync対象に `drizzle/` を追加して `deploy-backend.sh` で
+自動実行する仕組みを整備するコストに見合わないと判断）。
+
+**スキーマ変更を含むリリースでは、必ず以下の順序を守ること：**
+
+1. **先に** `drizzle-kit push` を実行してDBスキーマを更新する
+2. **その後に** アプリをデプロイ（＝pm2 reload）する
+
+順序を誤ると、新しいコードが旧スキーマに対して動く（またはその逆）状態が発生し、実行時エラーや
+データ不整合の原因になります。手動運用における唯一かつ最大のリスクがこの順序ミスです。
+
+```bash
+# 1) 先にマイグレーションを本番DBへ反映
+ssh -i ~/.ssh/lightsail_interview_prep ubuntu@<static-ip>
+cd /opt/app/current
+pnpm exec drizzle-kit push      # DB_PATH は /opt/app/shared/.env から読まれる
+exit
+
+# 2) その後に main へ push（＝このワークフローが走り pm2 reload される）
+git push origin main
+```
+
+スキーマ変更を含まないリリース（アプリコードのみの変更）では手順1は不要で、`main` への push だけでよい。
+
 ### ロールバック方針
 `/opt/app/releases/`には直近5世代が保持されるため、障害時は手動SSHで以下のようにロールバック可能です：
 
