@@ -27,6 +27,8 @@ function mockClient(overrides: Partial<GithubClient> = {}): GithubClient {
   return {
     getFile: vi.fn(async () => null),
     putFile: vi.fn(async () => ({ commitUrl: "https://github.com/asab0o/leetcode-interview-prep/commit/abc123", sha: "new-sha" })),
+    listDirectory: vi.fn(async () => null),
+    getLastCommitDate: vi.fn(async () => null),
     ...overrides,
   };
 }

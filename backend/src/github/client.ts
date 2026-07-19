@@ -2,12 +2,17 @@ import type { GithubConfig } from "../config";
 
 export type GithubGetFileResult = { sha: string } | null;
 export type GithubPutFileResult = { commitUrl: string; sha: string };
+export type GithubDirEntry = { name: string; type: "file" | "dir" };
 
-// GitHub Contents APIへの薄いラッパ。GithubServiceはこのインターフェースにのみ依存するため、
-// テストでは実通信をせずモック実装を注入できる（Anthropic呼び出しと同じDI思想）。
+// GitHub Contents API・Commits APIへの薄いラッパ。GithubServiceはこのインターフェースにのみ
+// 依存するため、テストでは実通信をせずモック実装を注入できる（Anthropic呼び出しと同じDI思想）。
+// listDirectory/getLastCommitDateは過去データインポート（5.7・scripts/import-legacy.ts）専用の
+// 追加メソッド（既存のgetFile/putFileと同じ設計思想：404はnull、非2xxは汎用Error＋ステータスのみログ）。
 export type GithubClient = {
   getFile(path: string): Promise<GithubGetFileResult>;
   putFile(path: string, content: string, message: string, sha?: string): Promise<GithubPutFileResult>;
+  listDirectory(path: string): Promise<GithubDirEntry[] | null>;
+  getLastCommitDate(path: string): Promise<string | null>;
 };
 
 const API_VERSION = "2022-11-28";
@@ -56,6 +61,42 @@ export function createFetchGithubClient(config: GithubConfig): GithubClient {
       }
       const body = (await response.json()) as { content: { sha: string }; commit: { html_url: string } };
       return { commitUrl: body.commit.html_url, sha: body.content.sha };
+    },
+
+    // Contents APIはディレクトリパスに対してGETすると要素の配列を返す（ファイルパスなら単一オブジェクト）。
+    // import-legacyは常にディレクトリパス（problems/ とその直下）にのみ呼ぶため、配列以外は異常として扱う。
+    async listDirectory(path: string): Promise<GithubDirEntry[] | null> {
+      const response = await fetch(`${baseUrl}/${encodeContentsPath(path)}`, { headers });
+      if (response.status === 404) return null;
+      if (!response.ok) {
+        console.error(`[github] listDirectory failed with status ${response.status}`);
+        throw new Error(`GitHub listDirectory failed with status ${response.status}`);
+      }
+      const body: unknown = await response.json();
+      if (!Array.isArray(body)) {
+        throw new Error(`GitHub listDirectory expected a directory listing at "${path}"`);
+      }
+      return (body as Array<{ name: string; type: string }>).map((entry) => ({
+        name: entry.name,
+        type: entry.type === "dir" ? "dir" : "file",
+      }));
+    },
+
+    // Commits API（?path=...&per_page=1）でそのファイルの最終コミット日時を取得する。
+    // インポート時のAttempt.dateの代用に使う（設計書02-api-design.md 359行）。
+    async getLastCommitDate(path: string): Promise<string | null> {
+      const commitsUrl =
+        `https://api.github.com/repos/${config.repoOwner}/${config.repoName}/commits` +
+        `?path=${encodeURIComponent(path)}&per_page=1`;
+      const response = await fetch(commitsUrl, { headers });
+      if (response.status === 404) return null;
+      if (!response.ok) {
+        console.error(`[github] getLastCommitDate failed with status ${response.status}`);
+        throw new Error(`GitHub getLastCommitDate failed with status ${response.status}`);
+      }
+      const body = (await response.json()) as Array<{ commit: { committer?: { date?: string }; author?: { date?: string } } }>;
+      const date = body[0]?.commit.committer?.date ?? body[0]?.commit.author?.date;
+      return date ?? null;
     },
   };
 }
